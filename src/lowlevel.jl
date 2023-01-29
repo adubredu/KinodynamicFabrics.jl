@@ -253,7 +253,9 @@ function compute_standing_command_torques(q, qdot, qdes, qdotdes, qmotors, probl
     v[di.RightHipRoll] = qdotdes[di.qrightHipRoll]
     v[di.RightHipPitch] = qdotdes[di.qrightHipPitch]
     v[di.RightKnee] = qdotdes[di.qrightKnee]
-    v[di.RightShoulderPitch]  = qdotdes[di.qrightShoulderPitch]
+    if problem.task_data[:cornhole][:fling]
+    v[di.RightShoulderPitch]  = problem.task_data[:cornhole][:throw_force]
+    end
 
     # fallback_opmode = 3
     # apply_command = true

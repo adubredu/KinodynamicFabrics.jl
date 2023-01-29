@@ -33,9 +33,9 @@ xᵨs[:open_arms_posture] = [-0.337, 0.463, -0.253, 0, 0.337, -0.463, 0.253, 0]
 xᵨs[:close_arms_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5]
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
-xᵨs[:load_posture] = [-0.084, -0.06, 0.0, 1.179, 0.14, -1.3, 0.0, -1.179]
-xᵨs[:throw_posture] = [0.2, 1.0, 0.0, 1.179, 0.14, 0.2, 0.0, -1.179]
-xᵨs[:pick_posture] = [0.084, 1.0, 0.0, 1.179, 0.14, 0.2, 0.0, -1.179]
+xᵨs[:load_posture] = [0.0, 0.0, 0.0, 0.0, 0.168, -1.432, 0.0, -1.179]
+xᵨs[:throw_posture] = [0.0, 0.0, 0.0, 0.0, 0.168, 0.632, 0.0, -1.179]
+xᵨs[:pick_posture] = [0.0, 0.0, 0.0, 0.0, 0.168, -0.463, 0.0, -1.179]
 
 ## task maps
 ψs = Dict() 
@@ -203,13 +203,15 @@ data[:cornhole] = Dict(
     :pick_period=>2.0,
     :clasp_period=>0.5,
     :load_period=>1.0,
-    :throw_period=>0.5,
+    :throw_period=>1.0,
     :descend_period=>2.0,
     :ascend_period=>2.0,
     :pick_height=>0.6,
     :pick_torso_pitch=>0.0,
     :throw_height=>0.8,
     :throw_torso_pitch=>0.0,
+    :fling=>false,
+    :throw_force=>1.2,
     :gripper=>gripper
 )
 

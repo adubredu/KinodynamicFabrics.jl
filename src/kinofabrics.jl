@@ -604,19 +604,19 @@ function cornhole_task_map(q, qdot, qmotors, observation, prob)
             params[:start_time] = prob.t
         end
     
-    elseif state == :throw
-        prob.W[:upper_body_posture] = 1e1
+    elseif state == :throw 
         s = (prob.t - params[:start_time])/params[:throw_period]
         prob.xᵨ[:upper_body_posture] = prob.xᵨ[:throw_posture]
+        params[:fling] = true
         if s >= 1.0
             params[:state] = :finish
+            params[:fling] = false
             params[:start_time] = prob.t
             # open_gripper!(params[:gripper])
             println("open gripper")
         end
 
-    elseif state == :finish
-        prob.W[:upper_body_posture] = 1e0
+    elseif state == :finish 
         prob.xᵨ[:upper_body_posture] = prob.xᵨ[:normal_posture]
     end
 
@@ -780,8 +780,7 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
         qdot_out[indices] = qvel[indices]  + θ̇d[indices]
     end
     q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices]
-    qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices]
-    @show qdot_out[di.qrightShoulderPitch]
+    qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices] 
     
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
     τ = zero(q_out) 
