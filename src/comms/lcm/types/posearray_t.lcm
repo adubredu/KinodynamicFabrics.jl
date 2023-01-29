@@ -1,0 +1,7 @@
+struct posearray_t
+{
+    int64_t timestamp;
+    int64_t num_poses;
+    pose_t poses[num_poses];
+}
+

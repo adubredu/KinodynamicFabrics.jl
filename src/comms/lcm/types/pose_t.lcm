@@ -1,0 +1,11 @@
+struct pose_t 
+{
+    int64_t timestamp;
+    double x;
+    double y;
+    double z;
+    double qw;
+    double qx;
+    double qy;
+    double qz;
+}

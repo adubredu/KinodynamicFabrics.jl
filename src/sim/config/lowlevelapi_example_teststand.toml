@@ -1,0 +1,15 @@
+# Add robot to simulation fixed above the ground
+[[model-list]]
+model = "robot"
+pose = {xyz = [0.0, 0.0, 1.2]}
+fixed = true
+
+[simulator.robot]
+initial-configuration = "test-stand"
+
+[planning]
+initial-operation-mode = "disabled"
+
+# This is required for the test stand to have an accurate estimate of Z height
+[simulator]
+perfect-state = true

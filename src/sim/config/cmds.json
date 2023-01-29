@@ -1,0 +1,31 @@
+#adding object
+[
+  "add-object",
+  {
+    "attributes": {"name":"obstacle",
+                  "mass":0.1,
+                  "box-geometry":[0.5, 0.5, 0.5]},
+    "transform": {"xyz":[0, 0, 1]},
+    "velocity": null,
+    "relative-to": {
+      "special-frame": "world"
+    },
+    "in-coordinates-of": {},
+    "stored-relative-to": {}
+  }
+]
+
+#moving object
+[
+  "set-object-kinematics",
+  {
+    "object": {"object-id":61},
+    "transform": {"xyz":[0.5, 0, 1]},
+    "velocity": null,
+    "relative-to": {
+      "special-frame": "world"
+    },
+    "in-coordinates-of": {},
+    "stored-relative-to": {}
+  }
+]

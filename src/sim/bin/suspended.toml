@@ -1,0 +1,18 @@
+[lowlevelapi]
+enable = true
+timeout = 0.05
+listen-port = 25500
+send-port = 25501
+
+
+# Add robot to simulation fixed above the ground
+[[model-list]]
+model = "robot"
+pose = {xyz = [0.0, 0.0, 1.2]}
+fixed = true
+
+[simulator.robot]
+initial-configuration = "test-stand"
+
+[planning]
+initial-operation-mode = "disabled"
