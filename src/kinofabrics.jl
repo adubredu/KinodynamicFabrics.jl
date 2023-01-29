@@ -216,7 +216,8 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
     if !(params[:action_index] > length(params[:plan]))
         current_action = params[:plan][params[:action_index]]
         name = current_action[1]
-        @show "current action: $name"
+        println("")
+        # @show "current action: $name"
         if name == :navigate 
             prob.task_data[name][:goal] = current_action[2] 
             prob.task_data[:mm][:standing] = false
@@ -275,6 +276,18 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
             prob.task_data[name][:torso_pitch] = current_action[3]
             prob.task_data[name][:period] = current_action[4]
             
+            #activate
+            activate_fabric!(name, prob, 2)
+            activate_fabric!(:com_target, prob, 1)
+            activate_fabric!(:upper_body_posture, prob, 1)
+
+            #deactivate
+            delete_fabric!(:navigate, prob, 3)
+            delete_fabric!(:walk, prob, 2)
+            delete_fabric!(:walk_attractor, prob, 1) 
+        
+        elseif name == :cornhole
+            prob.task_data[:mm][:standing] = true
             #activate
             activate_fabric!(name, prob, 2)
             activate_fabric!(:com_target, prob, 1)
@@ -517,6 +530,97 @@ function stand_task_map(q, qdot, qmotors, observation, prob)
 
 end
 
+function cornhole_task_map(q, qdot, qmotors, observation, prob)
+    params = prob.task_data[:cornhole]
+    state = params[:state]
+    @show state
+
+    if state == :init
+        # open_gripper!(params[:gripper])
+        println("open gripper")
+        params[:start_time] = prob.t
+        params[:state] = :descend_init
+    
+    elseif params[:state] == :descend_init
+        t0 = prob.t
+        T = params[:descend_period]
+        p0 = 0.0; z0 = 0.95
+        pf = params[:pick_torso_pitch]; zf = params[:pick_height]    
+        params[:pitch_trajectory] = t -> (1 - ((t-t0)/T))*p0 + ((t-t0)/T)*pf
+        params[:com_height_trajectory] = t -> (1 - ((t-t0)/T))*z0 + ((t-t0)/T)*zf  
+        params[:state] = :descend
+        params[:start_time] = prob.t 
+    
+    elseif params[:state] == :descend
+        pitch_traj = params[:pitch_trajectory]
+        height_traj = params[:com_height_trajectory] 
+        prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
+        prob.xᵨ[:com_target][7] = pitch_traj(prob.t)  
+        if abs(params[:descend_period] - (prob.t - params[:start_time])) < 1e-2
+            params[:state] = :pick
+            params[:start_time] = prob.t
+        end
+    
+    elseif state == :pick
+        s = (prob.t - params[:start_time])/params[:pick_period]
+        prob.xᵨ[:upper_body_posture] = prob.xᵨ[:pick_posture]
+        if s >= 1.0
+            params[:state] = :clasp
+        end
+    
+    elseif state == :clasp
+        s = (prob.t - params[:start_time])/params[:clasp_period]
+        # close_gripper!(params[:gripper])
+        println("close gripper")
+        if s >= 1.0
+            params[:state] = :ascend_init
+        end
+
+    elseif params[:state] == :ascend_init
+        t0 = prob.t
+        T = params[:ascend_period]
+        p0 = 0.0; z0 = params[:pick_height]
+        pf = params[:throw_torso_pitch]; zf = params[:throw_height]    
+        params[:pitch_trajectory] = t -> (1 - ((t-t0)/T))*p0 + ((t-t0)/T)*pf
+        params[:com_height_trajectory] = t -> (1 - ((t-t0)/T))*z0 + ((t-t0)/T)*zf 
+        params[:state] = :ascend
+        params[:start_time] = prob.t 
+    
+    elseif params[:state] == :ascend
+        pitch_traj = params[:pitch_trajectory]
+        height_traj = params[:com_height_trajectory] 
+        prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
+        prob.xᵨ[:com_target][7] = pitch_traj(prob.t)  
+        if abs(params[:ascend_period] - (prob.t - params[:start_time])) < 1e-2
+            params[:state] = :load
+            params[:start_time] = prob.t
+        end
+
+    elseif state == :load
+        s = (prob.t - params[:start_time])/params[:load_period]
+        prob.xᵨ[:upper_body_posture] = prob.xᵨ[:load_posture]
+        if s >= 1.0
+            params[:state] = :throw
+            params[:start_time] = prob.t
+        end
+    
+    elseif state == :throw
+        prob.W[:upper_body_posture] = 1e1
+        s = (prob.t - params[:start_time])/params[:throw_period]
+        prob.xᵨ[:upper_body_posture] = prob.xᵨ[:throw_posture]
+        if s >= 1.0
+            params[:state] = :finish
+            params[:start_time] = prob.t
+            # open_gripper!(params[:gripper])
+            println("open gripper")
+        end
+
+    elseif state == :finish
+        prob.W[:upper_body_posture] = 1e0
+        prob.xᵨ[:upper_body_posture] = prob.xᵨ[:normal_posture]
+    end
+
+end
 
 
 # Level 1
@@ -577,7 +681,7 @@ function upper_body_posture_fabric(x, ẋ, prob::FabricProblem)
     λᵪ = 0.25; k = 4.0;  β=0.75
     M = λᵪ * I(length(x))
     W = prob.W[:upper_body_posture] 
-    k = W*k
+    k = W*k 
     Δx = x - prob.xᵨ[:upper_body_posture]
     ψ(θ) = 0.5*θ'*k*θ
     δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
@@ -676,6 +780,8 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
         qdot_out[indices] = qvel[indices]  + θ̇d[indices]
     end
     q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices]
+    qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices]
+    @show qdot_out[di.qrightShoulderPitch]
     
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
     τ = zero(q_out) 

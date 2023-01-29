@@ -191,18 +191,7 @@ function compute_standing_command_torques(q, qdot, qdes, qdotdes, qmotors, probl
     q_motors_des[di.RightShoulderRoll] = qdes[di.qrightShoulderRoll]
     q_motors_des[di.RightShoulderPitch] = qdes[di.qrightShoulderPitch]
     q_motors_des[di.RightShoulderYaw] = qdes[di.qrightShoulderYaw]
-    q_motors_des[di.RightElbow] = qdes[di.qrightElbow]     
-    
-    
-    # toe_pitch, toe_roll = 0.0, 0.0
-    # rtoeA = kin.qm_toe(toe_pitch, toe_roll, "a", "right")
-    # rtoeB = kin.qm_toe(toe_pitch, toe_roll, "b", "right")
-    # ltoeA = kin.qm_toe(toe_pitch, toe_roll, "a", "left")
-    # ltoeB = kin.qm_toe(toe_pitch, toe_roll, "b", "left")
-    # q_motors_des[di.RightToeA] = rtoeA
-    # q_motors_des[di.RightToeB] = rtoeB
-    # q_motors_des[di.LeftToeA] = ltoeA
-    # q_motors_des[di.LeftToeB] = ltoeB
+    q_motors_des[di.RightElbow] = qdes[di.qrightElbow]  
 
     com_midpoint_error = p_com_aligned - 0.5 * (p_left_toe_aligned + p_right_toe_aligned)
     toe_pitch_error = com_midpoint_error[1] 
@@ -263,7 +252,8 @@ function compute_standing_command_torques(q, qdot, qdes, qdotdes, qmotors, probl
     v[di.LeftKnee] = qdotdes[di.qleftKnee]
     v[di.RightHipRoll] = qdotdes[di.qrightHipRoll]
     v[di.RightHipPitch] = qdotdes[di.qrightHipPitch]
-    v[di.RightKnee] = qdotdes[di.qrightKnee] 
+    v[di.RightKnee] = qdotdes[di.qrightKnee]
+    v[di.RightShoulderPitch]  = qdotdes[di.qrightShoulderPitch]
 
     # fallback_opmode = 3
     # apply_command = true
