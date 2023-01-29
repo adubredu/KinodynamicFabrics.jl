@@ -8,6 +8,7 @@ using LinearAlgebra
 using DigitInterface
 using GLMakie 
 using WebSockets, JSON
+using Gauntlet
 
 include("types.jl")
 include("utils.jl")

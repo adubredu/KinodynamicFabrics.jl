@@ -11,12 +11,16 @@ const di = DigitInterface
 F = 1e1
 N = 30
 
+
 ip = sim_ip
-host=:sim 
+host=:sim  
 gripper = nothing
 
 # ip = robot_ip
 # host=:real
+# port_name = "/dev/ttyUSB1"
+# baudrate = 9600
+# gripper = initialize_gripper(port_name, baudrate) 
 
 # digit
 digit = DigitBody()

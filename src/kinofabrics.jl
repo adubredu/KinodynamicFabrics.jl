@@ -536,7 +536,7 @@ function cornhole_task_map(q, qdot, qmotors, observation, prob)
     @show state
 
     if state == :init
-        # open_gripper!(params[:gripper])
+        open_gripper!(params[:gripper])
         println("open gripper")
         params[:start_time] = prob.t
         params[:state] = :descend_init
@@ -570,7 +570,7 @@ function cornhole_task_map(q, qdot, qmotors, observation, prob)
     
     elseif state == :clasp
         s = (prob.t - params[:start_time])/params[:clasp_period]
-        # close_gripper!(params[:gripper])
+        close_gripper!(params[:gripper])
         println("close gripper")
         if s >= 1.0
             params[:state] = :ascend_init
@@ -612,7 +612,7 @@ function cornhole_task_map(q, qdot, qmotors, observation, prob)
             params[:state] = :finish
             params[:fling] = false
             params[:start_time] = prob.t
-            # open_gripper!(params[:gripper])
+            open_gripper!(params[:gripper])
             println("open gripper")
         end
 
