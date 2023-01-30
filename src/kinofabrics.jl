@@ -275,6 +275,7 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
             prob.task_data[name][:com_height] = current_action[2]
             prob.task_data[name][:torso_pitch] = current_action[3]
             prob.task_data[name][:period] = current_action[4]
+            prob.task_data[name][:torso_roll] = current_action[5]
             
             #activate
             activate_fabric!(name, prob, 2)
@@ -520,6 +521,7 @@ function stand_task_map(q, qdot, qmotors, observation, prob)
         s = (prob.t - params[:start_time])/params[:period]
         prob.xᵨ[:com_target][[3,6]] .= params[:com_height]
         prob.xᵨ[:com_target][7] = params[:torso_pitch]
+        prob.xᵨ[:com_target][8] = params[:torso_roll]
         if s >= 1.0
             params[:state] = :init
             prob.task_data[:mm][:action_index] += 1
@@ -659,6 +661,7 @@ function com_target_task_map(θ, θ̇ , prob::FabricProblem)
     θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
     θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
     θ[di.qbase_pitch] = prob.xᵨ[:com_target][7] 
+    θ[di.qbase_roll] = prob.xᵨ[:com_target][8] 
     com_pos =  kin.p_com_wrt_feet(θ) 
     Rz = RotZ(θ[di.qbase_yaw]) 
     com = [(Rz * com_pos[1:3])..., (Rz * com_pos[4:6])...]
@@ -786,8 +789,14 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
     end
     q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices]
     qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices] 
+
     
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
+    qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max)
+
+    @show qdot_out[problem.digit.leg_joint_indices]
+
+
     τ = zero(q_out) 
     return  q_out, qdot_out, τ
 end

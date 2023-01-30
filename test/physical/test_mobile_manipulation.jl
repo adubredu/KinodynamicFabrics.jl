@@ -11,11 +11,11 @@ const di = DigitInterface
 F = 1e1
 N = 30
 
-ip = sim_ip
-host=:sim 
+# ip = sim_ip
+# host=:sim 
 
-# ip = robot_ip
-# host=:real
+ip = robot_ip
+host=:real
 
 # digit
 digit = DigitBody()
@@ -29,7 +29,7 @@ xᵨs[:walk] = [0.4, 0.0, 0.0]
 xᵨs[:left_swing] = [0.0, 0.3, 0.0, 0.0, 0.0, 0.0]
 xᵨs[:upper_body_posture] = [-0.15, 1.1, 0, -0.145, 0.15, -1.1, 0, 0.145]
 xᵨs[:walk_attractor] = [0.0, -0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-xᵨs[:com_target] = [0.0, -0.15, 0.92, -0.0, 0.15, 0.92, 0.0]
+xᵨs[:com_target] = [0.0, -0.15, 0.92, -0.0, 0.15, 0.92, 0.0, 0.0]
 xᵨs[:open_arms_posture] = [-0.337, 0.463, -0.253, 0, 0.337, -0.463, 0.253, 0]
 xᵨs[:close_arms_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5]
@@ -139,11 +139,12 @@ data[:mm] = Dict(
                     :standing=>true,
                     :digit=>digit,
                     :task_maps=>level1_task_maps,
-                    :plan => [(action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=5.0),
-                              (action_symbol=:navigate, waypoint=[1.0, 0.0, 0.0]),
-                              (action_symbol=:bimanual_pickup, com_height=0.6, torso_pitch=0.4),
-                              (action_symbol=:navigate, waypoint=[1.5,1.5, 0.875]),
-                              (action_symbol=:bimanual_place, com_height=0.6, torso_pitch=0.4),
+                    :plan => [(action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=5.0, torso_roll=-0.1),
+                              (action_symbol=:navigate, waypoint=[0.5, 0.0, 0.0]),
+                              (action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=50.0, torso_roll=0.0),
+                            #   (action_symbol=:bimanual_pickup, com_height=0.6, torso_pitch=0.4),
+                            #   (action_symbol=:navigate, waypoint=[1.5,1.5, 0.875]),
+                            #   (action_symbol=:bimanual_place, com_height=0.6, torso_pitch=0.4),
                             
                             #   (action_symbol=:bimanual_place, com_height=0.90, torso_pitch=0.4),
                             #   (action_symbol=:navigate, waypoint=[0.0, -0.1, 0.0]),
