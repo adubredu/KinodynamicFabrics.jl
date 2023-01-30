@@ -2,6 +2,7 @@ using Revise
 using KinodynamicFabrics
 using KinodynamicFabrics.DigitInterface
 using KinodynamicFabrics.LinearAlgebra
+using KinodynamicFabrics.Gauntlet
 using WebSockets, FiniteDiff
 using JSON, Rotations, GLMakie
 
@@ -12,15 +13,16 @@ F = 1e1
 N = 30
 
 
-ip = sim_ip
-host=:sim  
-gripper = nothing
+# ip = sim_ip
+# host=:sim  
+# gripper = nothing
 
-# ip = robot_ip
-# host=:real
-# port_name = "/dev/ttyUSB1"
-# baudrate = 9600
-# gripper = initialize_gripper(port_name, baudrate) 
+ip = robot_ip
+host=:real
+port_name = "/dev/ttyUSB0"
+baudrate = 9600
+try deactivate_gripper!(gripper) catch pass end
+gripper = initialize_gripper(port_name, baudrate) 
 
 # digit
 digit = DigitBody()
@@ -205,17 +207,17 @@ data[:cornhole] = Dict(
     :state=>:init,
     :start_time=>0.0,
     :pick_period=>2.0,
-    :clasp_period=>0.5,
+    :clasp_period=>2.0,
     :load_period=>1.0,
     :throw_period=>1.0,
     :descend_period=>2.0,
     :ascend_period=>2.0,
-    :pick_height=>0.6,
+    :pick_height=>0.75,
     :pick_torso_pitch=>0.0,
-    :throw_height=>0.8,
+    :throw_height=>0.9,
     :throw_torso_pitch=>0.0,
     :fling=>false,
-    :throw_force=>1.2,
+    :throw_force=>1.5,
     :gripper=>gripper
 )
 

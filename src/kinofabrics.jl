@@ -566,6 +566,7 @@ function cornhole_task_map(q, qdot, qmotors, observation, prob)
         prob.xᵨ[:upper_body_posture] = prob.xᵨ[:pick_posture]
         if s >= 1.0
             params[:state] = :clasp
+            params[:start_time] = prob.t
         end
     
     elseif state == :clasp
@@ -574,6 +575,7 @@ function cornhole_task_map(q, qdot, qmotors, observation, prob)
         println("close gripper")
         if s >= 1.0
             params[:state] = :ascend_init
+            params[:start_time] = prob.t
         end
 
     elseif params[:state] == :ascend_init
@@ -608,12 +610,15 @@ function cornhole_task_map(q, qdot, qmotors, observation, prob)
         s = (prob.t - params[:start_time])/params[:throw_period]
         prob.xᵨ[:upper_body_posture] = prob.xᵨ[:throw_posture]
         params[:fling] = true
+        if 0.2<s<0.4 
+            open_gripper!(params[:gripper])
+            println("open gripper")
+        end
+
         if s >= 1.0
             params[:state] = :finish
             params[:fling] = false
             params[:start_time] = prob.t
-            open_gripper!(params[:gripper])
-            println("open gripper")
         end
 
     elseif state == :finish 
