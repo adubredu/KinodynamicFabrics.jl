@@ -129,7 +129,7 @@ data[:walk] = Dict(:swing_time=>0.36,
                     :Rz_st=>RotZ(0.0),
                     :indices=>Indices(),
                     :inited=>false,
-                    :step_width=>0.23,
+                    :step_width=>0.25,
                     :digit=>digit 
                     )
 

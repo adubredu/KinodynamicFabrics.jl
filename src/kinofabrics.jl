@@ -811,7 +811,8 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
         params = problem.task_data[:walk]
         indices = [params[:indices].idx_q_sw_hiproll_, params[:indices].idx_q_sw_hippitch_, params[:indices].idx_q_sw_knee_, params[:indices].idx_q_st_knee_]
         q_out[indices] = θd[indices]
-        qdot_out[indices] = qvel[indices]  + θ̇d[indices]
+        qdot_out[indices] = qvel[indices] # + θ̇d[indices]
+        # @show qvel[indices]
     end
     q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices]
     qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices] 
@@ -826,6 +827,7 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
     # push!(problem.task_data[:diagnostics][:q], q_out[problem.digit.leg_joint_indices])
     # push!(problem.task_data[:diagnostics][:qdot], qdot_out[problem.digit.leg_joint_indices])
     # push!(problem.task_data[:diagnostics][:t], problem.t)
+    
 
     τ = zero(q_out) 
     return  q_out, qdot_out, τ
