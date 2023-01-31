@@ -129,7 +129,7 @@ data[:walk] = Dict(:swing_time=>0.36,
                     :Rz_st=>RotZ(0.0),
                     :indices=>Indices(),
                     :inited=>false,
-                    :step_width=>0.3,
+                    :step_width=>0.23,
                     :digit=>digit 
                     )
 
@@ -207,7 +207,8 @@ data[:filter] = Dict(
     :q_filtered => [],
     :qdot_filtered => [],
     :filter_parameter=>0.5,
-    :first_iter=>true
+    :first_iter_pos=>true,
+    :first_iter_vel=>true
 )
 
 Js = nothing

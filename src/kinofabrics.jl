@@ -208,18 +208,31 @@ function get_floating_pose(θ, params::Dict)
     return p
 end
 
-function filter_coordinates(qdot, prob)
+function filter_coordinates(vs, prob, val=:vel)
     param = prob.task_data[:filter]
     a = param[:filter_parameter]
-    if param[:first_iter]
-        qdot_filtered = qdot
-        param[:qdot_filtered] = qdot
-        param[:first_iter] = false
+    if val == :vel
+        if param[:first_iter_vel]
+            qdot_filtered = vs
+            param[:qdot_filtered] = vs
+            param[:first_iter_vel] = false
+        else
+            qdot_filtered = (1-a)*param[:qdot_filtered] + a*vs
+            param[:qdot_filtered] = qdot_filtered
+        end
+        return qdot_filtered
     else
-        qdot_filtered = (1-a)*param[:qdot_filtered] + a*qdot
-        param[:qdot_filtered] = qdot_filtered
+        if param[:first_iter_pos]
+            q_filtered = vs
+            param[:q_filtered] = vs
+            param[:first_iter_pos] = false
+        else
+            q_filtered = (1-a)*param[:q_filtered] + a*vs
+            param[:q_filtered] = q_filtered
+        end
+        return q_filtered
     end
-    return qdot_filtered
+
 end
 ## Task Maps
 
@@ -684,8 +697,8 @@ end
 
 
 ## Fabric Components
-function walk_attractor_fabric(x, xdot, problem)
-    k = 1.0; β=3; λ = 1.0
+function walk_attractor_fabric(x, ẋ, problem)
+    k = 1.0; β=0.5; λ = 1.0
     N = length(x)
     W = problem.W[:walk_attractor]
     k = W*k  
@@ -693,7 +706,7 @@ function walk_attractor_fabric(x, xdot, problem)
     Δx = x - vc_goal
     ψ(θ) = 0.5*θ'*k*θ
     δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*δx 
+    ẍ = -k*δx  
     M = λ * I(N)
     return (M, ẍ)
 end
@@ -807,11 +820,12 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
     qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max)
 
-    qdot_out = filter_coordinates(qdot_out, problem)
+    q_out = filter_coordinates(q_out, problem, :pos)
+    qdot_out = filter_coordinates(qdot_out, problem, :vel)
 
-    push!(problem.task_data[:diagnostics][:q], q_out[problem.digit.leg_joint_indices])
-    push!(problem.task_data[:diagnostics][:qdot], qdot_out[problem.digit.leg_joint_indices])
-    push!(problem.task_data[:diagnostics][:t], problem.t)
+    # push!(problem.task_data[:diagnostics][:q], q_out[problem.digit.leg_joint_indices])
+    # push!(problem.task_data[:diagnostics][:qdot], qdot_out[problem.digit.leg_joint_indices])
+    # push!(problem.task_data[:diagnostics][:t], problem.t)
 
     τ = zero(q_out) 
     return  q_out, qdot_out, τ

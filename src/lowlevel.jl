@@ -94,6 +94,18 @@ function compute_walking_command_torques(q_motors_des, qdot_motors_des, problem:
     kp_knee_stance = 1000.0
     kp_toe_stance = 0.0
 
+    # kp_hiproll_swing = 1500.0 
+    # kp_hipyaw_swing = 800.0    
+    # kp_hippitch_swing = 1500.0 
+    # kp_knee_swing = 800.0
+    # kp_toe_swing = 200.0
+
+    # kp_hiproll_stance = 800.0  
+    # kp_hipyaw_stance = 200.0   
+    # kp_hippitch_stance = 1500.0
+    # kp_knee_stance = 500.0
+    # kp_toe_stance = 0.0
+
     kp_shoulderroll_stand = 100.0
     kp_shoulderpitch_stand = 100.0
     kp_shoulderyaw_stand = 100.0
