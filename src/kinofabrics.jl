@@ -715,7 +715,7 @@ function walk_attractor_fabric(x, ẋ, problem)
 end
 
 function upper_body_posture_fabric(x, ẋ, prob::FabricProblem) 
-    λᵪ = 0.25; k = 4.0;  β=0.75
+    λᵪ = 0.25; k = 0.0;  β=0.75
     M = λᵪ * I(length(x))
     W = prob.W[:upper_body_posture] 
     k = W*k 
@@ -814,8 +814,8 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
         params = problem.task_data[:walk]
         indices = [params[:indices].idx_q_sw_hiproll_, params[:indices].idx_q_sw_hippitch_, params[:indices].idx_q_sw_knee_, params[:indices].idx_q_st_knee_]
         q_out[indices] = θd[indices]
-        qdot_out[indices] = qvel[indices] # + θ̇d[indices]
-        # @show qvel[indices]
+        qdot_out[indices] = θ̇d[indices] #qvel[indices] # + θ̇d[indices]
+        # @show qvel[indices] 
     end
     q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices]
     qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices] 
@@ -824,9 +824,9 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
     qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max)
 
-    q_out = filter_coordinates(q_out, problem, :pos)
+    # q_out = filter_coordinates(q_out, problem, :pos)
     qdot_out = filter_coordinates(qdot_out, problem, :vel)
-
+    # qdot_out = zero(qdot_out)
     # push!(problem.task_data[:diagnostics][:q], q_out[problem.digit.leg_joint_indices])
     # push!(problem.task_data[:diagnostics][:qdot], qdot_out[problem.digit.leg_joint_indices])
     # push!(problem.task_data[:diagnostics][:t], problem.t)

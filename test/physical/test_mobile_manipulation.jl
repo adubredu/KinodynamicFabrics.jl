@@ -11,11 +11,11 @@ const di = DigitInterface
 F = 1e1
 N = 30
 
-ip = sim_ip
-host=:sim 
+# ip = sim_ip
+# host=:sim 
 
-# ip = robot_ip
-# host=:real
+ip = robot_ip
+host=:real
 
 # digit
 digit = DigitBody()
@@ -129,7 +129,7 @@ data[:walk] = Dict(:swing_time=>0.36,
                     :Rz_st=>RotZ(0.0),
                     :indices=>Indices(),
                     :inited=>false,
-                    :step_width=>0.3,
+                    :step_width=>0.26,
                     :digit=>digit 
                     )
 
@@ -139,10 +139,10 @@ data[:mm] = Dict(
                     :standing=>true,
                     :digit=>digit,
                     :task_maps=>level1_task_maps,
-                    :plan => [(action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=5.0, torso_roll=0.0),
-                            #   (action_symbol=:navigate, waypoint=[0.5, 0.0, 0.0]),
-                            #   (action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=50.0, torso_roll=0.0),
-                              (action_symbol=:bimanual_pickup, com_height=0.93, torso_pitch=0.4),
+                    :plan => [(action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=5.0, torso_roll=-0.1),
+                              (action_symbol=:navigate, waypoint=[0.5, 0.0, 0.0]),
+                              (action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=50.0, torso_roll=0.0),
+                            #   (action_symbol=:bimanual_pickup, com_height=0.93, torso_pitch=0.4),
                             #   (action_symbol=:navigate, waypoint=[1.5,1.5, 0.875]),
                             #   (action_symbol=:bimanual_place, com_height=0.6, torso_pitch=0.4),
                             
@@ -201,13 +201,17 @@ data[:stand] = Dict(
 data[:diagnostics] = Dict(
     :q=>[],
     :qdot=>[],
-    :t=>[]
+    :t=>[],
+    :torques=>[],
+    :qarm=>[],
+    :qdotarm => [],
+    :torquearm => []
 )
 
 data[:filter] = Dict(
     :q_filtered => [],
     :qdot_filtered => [],
-    :filter_parameter=>0.5,
+    :filter_parameter=>0.1,
     :first_iter_pos=>true,
     :first_iter_vel=>true
 )
@@ -236,6 +240,7 @@ problem.task_data[:navigate][:init_position] = zeros(3) #qi[[di.qbase_pos_x, di.
 behavior_switcher(problem; host=host)
 
 while true  
+    # @time begin
     if mm_params[:observables][:standing_mode][]
         stand_control(observation, mm_params)
     else
@@ -247,5 +252,6 @@ while true
     end
     
 
-    # sleep(1e-6)
+    sleep(1e-6)
+# end
 end 
