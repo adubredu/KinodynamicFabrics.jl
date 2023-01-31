@@ -542,12 +542,15 @@ function stand_task_map(q, qdot, qmotors, observation, prob)
     if state == :init
         params[:start_time] = prob.t
         params[:state] = :run
+        p0 = q[di.qbase_pitch]; r0 = q[di.qbase_roll]
+        params[:pitch_trajectory] = s->(1-s)*p0 + s*params[:torso_pitch]
+        params[:roll_trajectory] = s->(1-s)*p0 + s*params[:torso_roll]
     
     elseif state == :run
         s = (prob.t - params[:start_time])/params[:period]
         prob.xᵨ[:com_target][[3,6]] .= params[:com_height]
-        prob.xᵨ[:com_target][7] = params[:torso_pitch]
-        prob.xᵨ[:com_target][8] = params[:torso_roll]
+        prob.xᵨ[:com_target][7] = params[:pitch_trajectory](s)
+        prob.xᵨ[:com_target][8] = params[:roll_trajectory](s)
         if s >= 1.0
             params[:state] = :init
             prob.task_data[:mm][:action_index] += 1

@@ -11,11 +11,11 @@ const di = DigitInterface
 F = 1e1
 N = 30
 
-# ip = sim_ip
-# host=:sim 
+ip = sim_ip
+host=:sim 
 
-ip = robot_ip
-host=:real
+# ip = robot_ip
+# host=:real
 
 # digit
 digit = DigitBody()
@@ -194,7 +194,22 @@ data[:stand] = Dict(
         :start_time=>0.0,
         :period=>1.0,
         :com_height=>0.95,
-        :torso_pitch=>0.0
+        :torso_pitch=>0.0,
+        :torso_roll=>0.0
+)
+
+data[:diagnostics] = Dict(
+    :q=>[],
+    :qdot=>[],
+    :t=>[]
+)
+
+data[:filter] = Dict(
+    :q_filtered => [],
+    :qdot_filtered => [],
+    :filter_parameter=>0.5,
+    :first_iter_pos=>true,
+    :first_iter_vel=>true
 )
 
 Js = nothing
