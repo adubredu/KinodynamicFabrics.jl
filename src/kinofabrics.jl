@@ -208,6 +208,19 @@ function get_floating_pose(θ, params::Dict)
     return p
 end
 
+function filter_coordinates(qdot, prob)
+    param = prob.task_data[:filter]
+    a = param[:filter_parameter]
+    if param[:first_iter]
+        qdot_filtered = qdot
+        param[:qdot_filtered] = qdot
+        param[:first_iter] = false
+    else
+        qdot_filtered = (1-a)*param[:qdot_filtered] + a*qdot
+        param[:qdot_filtered] = qdot_filtered
+    end
+    return qdot_filtered
+end
 ## Task Maps
 
 # Level 4
@@ -794,8 +807,11 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
     qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max)
 
-    @show qdot_out[problem.digit.leg_joint_indices]
+    qdot_out = filter_coordinates(qdot_out, problem)
 
+    push!(problem.task_data[:diagnostics][:q], q_out[problem.digit.leg_joint_indices])
+    push!(problem.task_data[:diagnostics][:qdot], qdot_out[problem.digit.leg_joint_indices])
+    push!(problem.task_data[:diagnostics][:t], problem.t)
 
     τ = zero(q_out) 
     return  q_out, qdot_out, τ
