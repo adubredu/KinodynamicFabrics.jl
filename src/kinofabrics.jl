@@ -269,6 +269,24 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
                 params[:init_start_time] = true 
             end
 
+        elseif name == :precise_move
+            prob.task_data[name][:direction] = current_action[2]
+            prob.task_data[name][:distance] = current_action[3]
+            prob.task_data[:mm][:standing] = false
+            # activate
+            activate_fabric!(name, prob, 3)
+            activate_fabric!(:walk, prob, 2)
+            activate_fabric!(:walk_attractor, prob, 1)
+            activate_fabric!(:upper_body_posture, prob, 1)
+
+            # deactivate
+            delete_fabric!(:bimanual_pickup, prob, 3) 
+            delete_fabric!(:com_target, prob, 1)
+            if !prob.task_data[name][:init_start_time]
+                prob.task_data[name][:start_time] = prob.t
+                params[:init_start_time] = true 
+            end
+
         elseif name == :bimanual_pickup
             prob.task_data[:mm][:standing] = true
             prob.task_data[name][:final_com] = current_action[2]
@@ -363,22 +381,15 @@ function navigate_task_map(θ, θ̇ , qmotors, observation, prob)
         if  switch
             s = (prob.t - params[:stand_start_time])/params[:stand_period]
             prob.task_data[:walk][:vel_des_target] = [0,0,0.] 
-            if s >= 1.0  && transition_to_stand(prob.task_data[:walk]) 
-                # activate_fabric!(:com_target, prob, 1)
-                # delete_fabric!(:walk_attractor, prob, 1)
-                # prob.task_data[:mm][:standing] = true 
-                
-                    @show s
-                    prob.xᵨ[:com_target][[3,6]] .= prob.task_data[:walk][:walk_height]
-                    activate_fabric!(:com_target, prob, 1)
-                    delete_fabric!(:walk_attractor, prob, 1)
-                    prob.task_data[:mm][:standing] = true
-                    params[:state] = :translate
-                    # prob.task_data[:walk][:step_width] = 0.3
-                    prob.task_data[:mm][:action_index] += 1  
-                    prob.task_data[:bimanual_pickup][:action_start_time] = prob.t
-                end
-            # end
+            if s >= 1.0  && transition_to_stand(prob.task_data[:walk])  
+                prob.xᵨ[:com_target][[3,6]] .= prob.task_data[:walk][:walk_height]
+                activate_fabric!(:com_target, prob, 1)
+                delete_fabric!(:walk_attractor, prob, 1)
+                prob.task_data[:mm][:standing] = true
+                params[:state] = :translate 
+                prob.task_data[:mm][:action_index] += 1  
+                prob.task_data[:bimanual_pickup][:action_start_time] = prob.t
+            end 
         else 
             params[:state] = :translate 
             prob.task_data[:mm][:action_index] += 1
@@ -388,9 +399,60 @@ function navigate_task_map(θ, θ̇ , qmotors, observation, prob)
 end
 
 function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
+    params = prob.task_data[:precise_move]
+    state = params[:state]
+    @show state
+    u = [0., 0, 0]
+    if state == :init
+        params[:init_position] = θ[[di.qbase_pos_x, di.qbase_pos_y]]
+        params[:state] = :move
+    
+    elseif state == :move
+        current_pose = θ[[di.qbase_pos_x, di.qbase_pos_y]]
+        d = norm(current_pose-params[:init_position])
+        sign = params[:distance] < 0 ? -1 : 1
+        e = sign*(d - abs(params[:distance]))
+        # @show e
+        dedt = e/params[:dt]
+        v = -params[:Kp]*e - params[:Kd]*dedt
+        v = clamp(v, -params[:lim], params[:lim])
+        if params[:direction] == :forward u[1] = v else u[2] = v  end
+        if abs(e) < params[:tolerance] 
+            params[:state] = :purgatory
+            params[:stand_start_time] = prob.t
+        end
+
+    elseif state == :purgatory
+        s = (prob.t - params[:stand_start_time])/params[:stand_period]
+        prob.task_data[:walk][:vel_des_target] = [0,0,0.] 
+        if s >= 1.0
+            params[:state] = :stand
+        end
 
 
-
+    elseif state == :stand 
+        if prob.task_data[:mm][:action_index] >= length(prob.task_data[:mm][:plan])  switch = true else
+            switch = !(prob.task_data[:mm][:plan][prob.task_data[:mm][:action_index]+1][1] in (:precise_move, :navigate))
+        end
+        if  switch
+            s = (prob.t - params[:stand_start_time])/params[:stand_period]
+            prob.task_data[:walk][:vel_des_target] = [0,0,0.] 
+            if s >= 1.0  && transition_to_stand(prob.task_data[:walk])  
+                prob.xᵨ[:com_target][[3,6]] .= prob.task_data[:walk][:walk_height]
+                activate_fabric!(:com_target, prob, 1)
+                delete_fabric!(:walk_attractor, prob, 1)
+                prob.task_data[:mm][:standing] = true
+                params[:state] = :init 
+                prob.task_data[:mm][:action_index] += 1  
+                prob.task_data[:bimanual_pickup][:action_start_time] = prob.t
+            end 
+        else 
+            params[:state] = :init 
+            prob.task_data[:mm][:action_index] += 1
+        end
+    end
+    @show u
+    prob.task_data[:walk][:vel_des_target] = u     
 end
 
 function bimanual_pickup_task_map(q, qdot, qmotors, observation, prob)  
@@ -400,7 +462,7 @@ function bimanual_pickup_task_map(q, qdot, qmotors, observation, prob)
     if params[:state] == :descend_init
         t0 = prob.t
         T = params[:flight_time]
-        p0 = 0.0; z0 = 0.95
+        p0 = 0.0; z0 = kin.p_com_wrt_feet(q)[3]
         pf = params[:final_pitch]; zf = params[:final_com]        
         pitch(t) = (1 - ((t-t0)/T))*p0 + ((t-t0)/T)*pf
         com_height(t) = (1 - ((t-t0)/T))*z0 + ((t-t0)/T)*zf
@@ -470,7 +532,7 @@ function bimanual_place_task_map(q, qdot, qmotors, observation, prob)
     if params[:state] == :descend_init
         t0 = prob.t 
         T = params[:flight_time]
-        p0 = 0.0; z0 = 0.95
+        p0 = 0.0; z0 = kin.p_com_wrt_feet(q)[3]
         pf = params[:final_pitch]; zf = params[:final_com]        
         pitch(t) = (1 - ((t-t0)/T))*p0 + ((t-t0)/T)*pf
         com_height(t) = (1 - ((t-t0)/T))*z0 + ((t-t0)/T)*zf
