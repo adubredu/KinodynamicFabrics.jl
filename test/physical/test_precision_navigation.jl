@@ -35,7 +35,7 @@ xᵨs[:close_arms_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5]
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 
-# xᵨs[:upper_body_posture]=xᵨs[:clutch_arms] 
+xᵨs[:upper_body_posture]=xᵨs[:close_arms_posture] 
 
 ## task maps
 ψs = Dict() 
@@ -139,9 +139,13 @@ data[:mm] = Dict(
                     :standing=>true,
                     :digit=>digit,
                     :task_maps=>level1_task_maps,
-                    :plan => [(action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=5.0, torso_roll=0.2), 
-                              (action_symbol=:bimanual_pickup, com_height=0.93, torso_pitch=0.4),
-                              (action_symbol=:navigate, waypoint=[0.1, 0.7, 0.0]),
+                    :plan => [(action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=5.0, torso_roll=0.0),
+                              (action_symbol=:navigate, waypoint=[0.5, 0.0, 0.0]),
+                            #   (action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=50.0, torso_roll=0.0),
+                            #   (action_symbol=:bimanual_pickup, com_height=0.93, torso_pitch=0.4),
+                            #   (action_symbol=:navigate, waypoint=[1.5,1.5, 0.875]),
+                            #   (action_symbol=:bimanual_place, com_height=0.6, torso_pitch=0.4),
+                            
                             #   (action_symbol=:bimanual_place, com_height=0.90, torso_pitch=0.4),
                             #   (action_symbol=:navigate, waypoint=[0.0, -0.1, 0.0]),
                             #   (action_symbol=:bimanual_pickup, com_height=0.6, torso_pitch=0.4),
@@ -158,7 +162,7 @@ data[:navigate] = Dict(
                     :B_turn=>0.2,
                     :stand_start_time=>0.0,
                     :stand_period=>2.0,
-                    :tolerance=>0.2,
+                    :tolerance=>0.25,
                     :init_start_time=>false,
                     :init_position=>[0.0,0.0,0.0])
 
@@ -190,7 +194,26 @@ data[:stand] = Dict(
         :start_time=>0.0,
         :period=>1.0,
         :com_height=>0.95,
-        :torso_pitch=>0.0
+        :torso_pitch=>0.0,
+        :torso_roll=>0.0
+)
+
+data[:diagnostics] = Dict(
+    :q=>[],
+    :qdot=>[],
+    :t=>[],
+    :torques=>[],
+    :qarm=>[],
+    :qdotarm => [],
+    :torquearm => []
+)
+
+data[:filter] = Dict(
+    :q_filtered => [],
+    :qdot_filtered => [],
+    :filter_parameter=>0.1,
+    :first_iter_pos=>true,
+    :first_iter_vel=>true
 )
 
 Js = nothing
@@ -217,6 +240,7 @@ problem.task_data[:navigate][:init_position] = zeros(3) #qi[[di.qbase_pos_x, di.
 behavior_switcher(problem; host=host)
 
 while true  
+    # @time begin
     if mm_params[:observables][:standing_mode][]
         stand_control(observation, mm_params)
     else
@@ -228,5 +252,6 @@ while true
     end
     
 
-    # sleep(1e-6)
+    sleep(1e-6)
+# end
 end 

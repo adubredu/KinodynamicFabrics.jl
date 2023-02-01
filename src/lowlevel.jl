@@ -63,24 +63,24 @@ function compute_mm_desired_motor_positions(q_all_des, q_all_dot_des, problem::F
         q_motors_des[di.LeftToeA] = toeA
         q_motors_des[di.LeftToeB] = toeB
     end
-    # q_motors_des[di.LeftShoulderRoll] = q_all_des[di.qleftShoulderRoll]
-    # q_motors_des[di.LeftShoulderPitch] = q_all_des[di.qleftShoulderPitch]
-    # q_motors_des[di.LeftShoulderYaw] = q_all_des[di.qleftShoulderYaw]
-    # q_motors_des[di.LeftElbow] = q_all_des[di.qleftElbow]
+    q_motors_des[di.LeftShoulderRoll] = q_all_des[di.qleftShoulderRoll]
+    q_motors_des[di.LeftShoulderPitch] = q_all_des[di.qleftShoulderPitch]
+    q_motors_des[di.LeftShoulderYaw] = q_all_des[di.qleftShoulderYaw]
+    q_motors_des[di.LeftElbow] = q_all_des[di.qleftElbow]
 
-    # q_motors_des[di.RightShoulderRoll] = q_all_des[di.qrightShoulderRoll]
-    # q_motors_des[di.RightShoulderPitch] = q_all_des[di.qrightShoulderPitch]
-    # q_motors_des[di.RightShoulderYaw] = q_all_des[di.qrightShoulderYaw]
-    # q_motors_des[di.RightElbow] = q_all_des[di.qrightElbow]
+    q_motors_des[di.RightShoulderRoll] = q_all_des[di.qrightShoulderRoll]
+    q_motors_des[di.RightShoulderPitch] = q_all_des[di.qrightShoulderPitch]
+    q_motors_des[di.RightShoulderYaw] = q_all_des[di.qrightShoulderYaw]
+    q_motors_des[di.RightElbow] = q_all_des[di.qrightElbow]
 
-    q_motors_des[di.LeftShoulderRoll] = -0.15
-    q_motors_des[di.LeftShoulderPitch] = 1.1
-    q_motors_des[di.LeftShoulderYaw] = 0
-    q_motors_des[di.LeftElbow] = -0.145
-    q_motors_des[di.RightShoulderRoll] = 0.15
-    q_motors_des[di.RightShoulderPitch] = -1.1
-    q_motors_des[di.RightShoulderYaw] = 0
-    q_motors_des[di.RightElbow] = 0.145
+    # q_motors_des[di.LeftShoulderRoll] = -0.15
+    # q_motors_des[di.LeftShoulderPitch] = 1.1
+    # q_motors_des[di.LeftShoulderYaw] = 0
+    # q_motors_des[di.LeftElbow] = -0.145
+    # q_motors_des[di.RightShoulderRoll] = 0.15
+    # q_motors_des[di.RightShoulderPitch] = -1.1
+    # q_motors_des[di.RightShoulderYaw] = 0
+    # q_motors_des[di.RightElbow] = 0.145
 
     return q_motors_des, qdot_motors_des
 end
@@ -173,10 +173,10 @@ function compute_walking_command_torques(q_motors_des, qdot_motors_des, problem:
         τ[di.RightHipRoll] += u_hiproll_comp_ 
     end   
  
-    push!(problem.task_data[:diagnostics][:t], problem.t)
-    push!(problem.task_data[:diagnostics][:torques], τ)
-    push!(problem.task_data[:diagnostics][:q], q_motors_des)
-    push!(problem.task_data[:diagnostics][:qdot], qdot_motors_des)
+    # push!(problem.task_data[:diagnostics][:t], problem.t)
+    # push!(problem.task_data[:diagnostics][:torques], τ)
+    # push!(problem.task_data[:diagnostics][:q], q_motors_des)
+    # push!(problem.task_data[:diagnostics][:qdot], qdot_motors_des)
 
     return τ, v
 end
@@ -211,24 +211,24 @@ function compute_standing_command_torques(q, qdot, qdes, qdotdes, qmotors, probl
     q_motors_des[di.LeftHipYaw] = 0
     q_motors_des[di.RightHipYaw] = 0
 
-    # q_motors_des[di.LeftShoulderRoll] = qdes[di.qleftShoulderRoll]
-    # q_motors_des[di.LeftShoulderPitch] = qdes[di.qleftShoulderPitch]
-    # q_motors_des[di.LeftShoulderYaw] = qdes[di.qleftShoulderYaw]
-    # q_motors_des[di.LeftElbow] = qdes[di.qleftElbow]
-    # q_motors_des[di.RightShoulderRoll] = qdes[di.qrightShoulderRoll]
-    # q_motors_des[di.RightShoulderPitch] = qdes[di.qrightShoulderPitch]
-    # q_motors_des[di.RightShoulderYaw] = qdes[di.qrightShoulderYaw]
-    # q_motors_des[di.RightElbow] = qdes[di.qrightElbow]  
+    q_motors_des[di.LeftShoulderRoll] = qdes[di.qleftShoulderRoll]
+    q_motors_des[di.LeftShoulderPitch] = qdes[di.qleftShoulderPitch]
+    q_motors_des[di.LeftShoulderYaw] = qdes[di.qleftShoulderYaw]
+    q_motors_des[di.LeftElbow] = qdes[di.qleftElbow]
+    q_motors_des[di.RightShoulderRoll] = qdes[di.qrightShoulderRoll]
+    q_motors_des[di.RightShoulderPitch] = qdes[di.qrightShoulderPitch]
+    q_motors_des[di.RightShoulderYaw] = qdes[di.qrightShoulderYaw]
+    q_motors_des[di.RightElbow] = qdes[di.qrightElbow]  
 
 
-    q_motors_des[di.LeftShoulderRoll] = -0.15
-    q_motors_des[di.LeftShoulderPitch] = 1.1
-    q_motors_des[di.LeftShoulderYaw] = 0
-    q_motors_des[di.LeftElbow] = -0.145
-    q_motors_des[di.RightShoulderRoll] = 0.15
-    q_motors_des[di.RightShoulderPitch] = -1.1
-    q_motors_des[di.RightShoulderYaw] = 0
-    q_motors_des[di.RightElbow] = 0.145
+    # q_motors_des[di.LeftShoulderRoll] = -0.15
+    # q_motors_des[di.LeftShoulderPitch] = 1.1
+    # q_motors_des[di.LeftShoulderYaw] = 0
+    # q_motors_des[di.LeftElbow] = -0.145
+    # q_motors_des[di.RightShoulderRoll] = 0.15
+    # q_motors_des[di.RightShoulderPitch] = -1.1
+    # q_motors_des[di.RightShoulderYaw] = 0
+    # q_motors_des[di.RightElbow] = 0.145
 
     com_midpoint_error = p_com_aligned - 0.5 * (p_left_toe_aligned + p_right_toe_aligned)
     toe_pitch_error = com_midpoint_error[1] 
@@ -342,8 +342,8 @@ function send_command_torques(torques, velocities, problem::FabricProblem)
     fallback_opmode = 3
     apply_command = true
     β = 1.2*problem.digit.damping
-    β[[di.LeftShoulderRoll, di.LeftShoulderPitch, di.LeftShoulderYaw, di.LeftElbow,
-    di.RightShoulderRoll, di.RightShoulderPitch, di.RightShoulderYaw, di.RightElbow]] .= 0.8
+    # β[[di.LeftShoulderRoll, di.LeftShoulderPitch, di.LeftShoulderYaw, di.LeftElbow,
+    # di.RightShoulderRoll, di.RightShoulderPitch, di.RightShoulderYaw, di.RightElbow]] .= 0.8
 
     if !problem.task_data[:mm][:standing]
         if params[:swing_foot] == :right 

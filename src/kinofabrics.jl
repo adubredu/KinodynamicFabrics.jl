@@ -24,6 +24,13 @@ function made_impact(params)
     return false
 end
 
+function transition_to_stand(params)
+    if params[:s] > 0.9 && params[:swing_foot] == :right
+        return true
+    end
+    return false
+end
+
 function check_stance_switch(params)
     if made_impact(params)
         params[:swing_foot] = params[:swing_foot] == :left ? :right : :left 
@@ -337,47 +344,49 @@ function navigate_task_map(θ, θ̇ , qmotors, observation, prob)
     if state == :translate        
         ψ = attractor_task_map 
         p = get_floating_pose(θ, params)
-        @show p
+        # @show p
         x = ψ(p, params)
         J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, params), p)
         f = attractor_potential(x, params)
-        u = J'*f 
-        # u = clamp.(u, -[0.1,0.1,0.1], [0.1,0.1,0.1])
+        u = J'*f  
         delta = norm(p-params[:goal])
-        @show delta
-        # if delta < params[:tolerance]*2
-        #     prob.task_data[:walk][:step_width] = 0.4
-        # end
+        # @show delta 
         if delta < params[:tolerance]
             params[:state] = :stand
             params[:stand_start_time] = prob.t
         end
     elseif state == :stand 
-        if length(prob.task_data[:mm][:plan]) == 1 switch = true else
+        if prob.task_data[:mm][:action_index] >= length(prob.task_data[:mm][:plan])  switch = true else
             switch = prob.task_data[:mm][:plan][prob.task_data[:mm][:action_index]+1][1] != :navigate 
         end
         if  switch
             s = (prob.t - params[:stand_start_time])/params[:stand_period]
-            prob.task_data[:walk][:vel_des_target] = [0,0,0.]
-            @show prob.task_data[:walk][:s]
+            prob.task_data[:walk][:vel_des_target] = [0,0,0.] 
             if s >= 1.0  
-                activate_fabric!(:com_target, prob, 1)
-                delete_fabric!(:walk_attractor, prob, 1)
-                prob.task_data[:mm][:standing] = true 
-                if made_impact(prob.task_data[:walk])
+                # activate_fabric!(:com_target, prob, 1)
+                # delete_fabric!(:walk_attractor, prob, 1)
+                # prob.task_data[:mm][:standing] = true 
+                if transition_to_stand(prob.task_data[:walk]) 
+                    activate_fabric!(:com_target, prob, 1)
+                    delete_fabric!(:walk_attractor, prob, 1)
+                    prob.task_data[:mm][:standing] = true
                     params[:state] = :translate
                     # prob.task_data[:walk][:step_width] = 0.3
                     prob.task_data[:mm][:action_index] += 1  
                     prob.task_data[:bimanual_pickup][:action_start_time] = prob.t
                 end
             end
-        else
-            # @show "translating"
+        else 
             params[:state] = :translate 
             prob.task_data[:mm][:action_index] += 1
         end
     end
     prob.task_data[:walk][:vel_des_target] = u
+end
+
+function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
+
+
 end
 
 function bimanual_pickup_task_map(q, qdot, qmotors, observation, prob)  
@@ -715,7 +724,7 @@ function walk_attractor_fabric(x, ẋ, problem)
 end
 
 function upper_body_posture_fabric(x, ẋ, prob::FabricProblem) 
-    λᵪ = 0.25; k = 0.0;  β=0.75
+    λᵪ = 0.25; k = 4.0;  β=0.75
     M = λᵪ * I(length(x))
     W = prob.W[:upper_body_posture] 
     k = W*k 
@@ -810,22 +819,21 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
     if problem.task_data[:mm][:standing]
         θd = q + θ̇d*1e-1
         q_out[problem.digit.leg_joint_indices] = θd[problem.digit.leg_joint_indices]
+        q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices] 
     else
         params = problem.task_data[:walk]
         indices = [params[:indices].idx_q_sw_hiproll_, params[:indices].idx_q_sw_hippitch_, params[:indices].idx_q_sw_knee_, params[:indices].idx_q_st_knee_]
         q_out[indices] = θd[indices]
-        qdot_out[indices] = θ̇d[indices] #qvel[indices] # + θ̇d[indices]
-        # @show qvel[indices] 
+        qdot_out[indices] = qvel[indices]#+ θ̇d[indices]
+        q_out[problem.digit.arm_joint_indices] = q[problem.digit.arm_joint_indices] + θ̇d[problem.digit.arm_joint_indices]*1e-1
     end
-    q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices]
     qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices] 
 
-    
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
     qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max)
 
     # q_out = filter_coordinates(q_out, problem, :pos)
-    qdot_out = filter_coordinates(qdot_out, problem, :vel)
+    # qdot_out = filter_coordinates(qdot_out, problem, :vel)
     # qdot_out = zero(qdot_out)
     # push!(problem.task_data[:diagnostics][:q], q_out[problem.digit.leg_joint_indices])
     # push!(problem.task_data[:diagnostics][:qdot], qdot_out[problem.digit.leg_joint_indices])
