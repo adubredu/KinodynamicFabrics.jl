@@ -25,7 +25,7 @@ function made_impact(params)
 end
 
 function transition_to_stand(params)
-    if params[:s] > 0.9 && params[:swing_foot] == :right
+    if params[:s] > 0.9 #&& params[:swing_foot] == :right
         return true
     end
     return false
@@ -107,6 +107,7 @@ function compute_alip_foot_placement(params)
     com_wrt_feet = kin.p_com_wrt_feet(params[:q])
     id = params[:swing_foot] == :left ? 6 : 3
     zH = com_wrt_feet[id]
+    params[:walk_height] = zH
     lip_constant = sqrt(9.806/zH)
     Ts = params[:swing_time]
     T_r = (1-params[:s])*Ts
@@ -362,11 +363,13 @@ function navigate_task_map(θ, θ̇ , qmotors, observation, prob)
         if  switch
             s = (prob.t - params[:stand_start_time])/params[:stand_period]
             prob.task_data[:walk][:vel_des_target] = [0,0,0.] 
-            if s >= 1.0  
+            if s >= 1.0  && transition_to_stand(prob.task_data[:walk]) 
                 # activate_fabric!(:com_target, prob, 1)
                 # delete_fabric!(:walk_attractor, prob, 1)
                 # prob.task_data[:mm][:standing] = true 
-                if transition_to_stand(prob.task_data[:walk]) 
+                
+                    @show s
+                    prob.xᵨ[:com_target][[3,6]] .= prob.task_data[:walk][:walk_height]
                     activate_fabric!(:com_target, prob, 1)
                     delete_fabric!(:walk_attractor, prob, 1)
                     prob.task_data[:mm][:standing] = true
@@ -375,7 +378,7 @@ function navigate_task_map(θ, θ̇ , qmotors, observation, prob)
                     prob.task_data[:mm][:action_index] += 1  
                     prob.task_data[:bimanual_pickup][:action_start_time] = prob.t
                 end
-            end
+            # end
         else 
             params[:state] = :translate 
             prob.task_data[:mm][:action_index] += 1
@@ -385,6 +388,7 @@ function navigate_task_map(θ, θ̇ , qmotors, observation, prob)
 end
 
 function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
+
 
 
 end
@@ -824,7 +828,7 @@ function mm_fabric_compute(q, qdot, qmotors, observation, problem)
         params = problem.task_data[:walk]
         indices = [params[:indices].idx_q_sw_hiproll_, params[:indices].idx_q_sw_hippitch_, params[:indices].idx_q_sw_knee_, params[:indices].idx_q_st_knee_]
         q_out[indices] = θd[indices]
-        qdot_out[indices] = qvel[indices]#+ θ̇d[indices]
+        qdot_out[indices] = qvel[indices]+ θ̇d[indices]
         q_out[problem.digit.arm_joint_indices] = q[problem.digit.arm_joint_indices] + θ̇d[problem.digit.arm_joint_indices]*1e-1
     end
     qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices] 

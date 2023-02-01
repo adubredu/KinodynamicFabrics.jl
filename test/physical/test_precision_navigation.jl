@@ -35,7 +35,7 @@ xᵨs[:close_arms_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5]
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 
-xᵨs[:upper_body_posture]=xᵨs[:close_arms_posture] 
+# xᵨs[:upper_body_posture]=xᵨs[:close_arms_posture] 
 
 ## task maps
 ψs = Dict() 
@@ -165,6 +165,14 @@ data[:navigate] = Dict(
                     :tolerance=>0.25,
                     :init_start_time=>false,
                     :init_position=>[0.0,0.0,0.0])
+
+data[:precise_move] = Dict(
+    :goal=>[2.0, 0.0, 0.0],
+    :K=>0.2,
+    :state=>:translate,
+    :init_start_time=>false,
+    :init_position=>[0.0,0.0,0.0]
+)
 
 data[:bimanual_pickup] = Dict(
                     :state=>:descend_init, 
