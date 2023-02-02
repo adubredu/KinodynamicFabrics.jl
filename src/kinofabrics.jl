@@ -25,7 +25,7 @@ function made_impact(params)
 end
 
 function transition_to_stand(params)
-    if params[:s] > 0.9 #&& params[:swing_foot] == :right
+    if params[:s] > 0.5 #&& params[:swing_foot] == :right
         return true
     end
     return false
@@ -251,7 +251,7 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
         current_action = params[:plan][params[:action_index]]
         name = current_action[1]
         println("")
-        # @show "current action: $name"
+        @show name, params[:action_index]
         if name == :navigate 
             prob.task_data[name][:goal] = current_action[2] 
             prob.task_data[:mm][:standing] = false
@@ -265,8 +265,26 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
             delete_fabric!(:bimanual_pickup, prob, 3) 
             delete_fabric!(:com_target, prob, 1)
             if !prob.task_data[name][:init_start_time]
-                prob.task_data[name][:start_time] = prob.t
+                # prob.task_data[name][:start_time] = prob.t
                 params[:init_start_time] = true 
+            end
+
+        elseif name == :walk_in_place  
+            prob.task_data[:mm][:standing] = false
+            prob.task_data[name][:period] = current_action[2]
+            # activate
+            activate_fabric!(name, prob, 3)
+            activate_fabric!(:walk, prob, 2)
+            activate_fabric!(:walk_attractor, prob, 1)
+            activate_fabric!(:upper_body_posture, prob, 1)
+
+            # deactivate
+            delete_fabric!(:bimanual_pickup, prob, 3) 
+            delete_fabric!(:com_target, prob, 1) 
+            if !prob.task_data[name][:init_start_time]
+                println("initing")
+                prob.task_data[name][:start_time] = prob.t
+                prob.task_data[name][:init_start_time] = true 
             end
 
         elseif name == :precise_move
@@ -398,6 +416,30 @@ function navigate_task_map(θ, θ̇ , qmotors, observation, prob)
     prob.task_data[:walk][:vel_des_target] = u
 end
 
+function walk_in_place_task_map(θ, θ̇ , qmotors, observation, prob)
+    params = prob.task_data[:walk_in_place]
+    state = params[:state]
+    u = [0., 0, 0]
+    # @show state
+    
+    # if state == :init 
+    #     params[:state] = :walk
+
+    if state == :walk
+        s = (prob.t - params[:start_time])/params[:period]
+        # @show s
+        if s >= 1.0
+            params[:state] = :finish
+        end
+
+    elseif state == :finish
+        prob.task_data[:mm][:action_index] += 1 
+        # params[:state] = :walk
+    end
+    prob.task_data[:walk][:vel_des_target] = u
+end
+
+
 function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
     params = prob.task_data[:precise_move]
     state = params[:state]
@@ -405,7 +447,15 @@ function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
     u = [0., 0, 0]
     if state == :init
         params[:init_position] = θ[[di.qbase_pos_x, di.qbase_pos_y]]
-        params[:state] = :move
+        params[:state] = :walk_in_place
+        params[:w_start_time] = prob.t
+
+    elseif state == :walk_in_place
+        s = (prob.t - params[:w_start_time])/params[:w_period]
+        prob.task_data[:walk][:vel_des_target] = [0,0,0.] 
+        if s >= 1.0
+            params[:state] = :move
+        end
     
     elseif state == :move
         current_pose = θ[[di.qbase_pos_x, di.qbase_pos_y]]
@@ -451,13 +501,13 @@ function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
             prob.task_data[:mm][:action_index] += 1
         end
     end
-    @show u
+    # @show u
     prob.task_data[:walk][:vel_des_target] = u     
 end
 
 function bimanual_pickup_task_map(q, qdot, qmotors, observation, prob)  
     params = prob.task_data[:bimanual_pickup]
-    println("state: $(params[:state])")
+    # println("state: $(params[:state])")
 
     if params[:state] == :descend_init
         t0 = prob.t
@@ -527,7 +577,7 @@ end
 
 function bimanual_place_task_map(q, qdot, qmotors, observation, prob) 
     params = prob.task_data[:bimanual_place]
-    println("state: $(params[:state])")
+    # println("state: $(params[:state])")
 
     if params[:state] == :descend_init
         t0 = prob.t 
