@@ -232,7 +232,7 @@ function compute_standing_command_torques(q, qdot, qdes, qdotdes, qmotors, probl
 
     com_midpoint_error = p_com_aligned - 0.5 * (p_left_toe_aligned + p_right_toe_aligned)
     toe_pitch_error = com_midpoint_error[1] 
-    Kerr = 1.3 
+    Kerr = 1.3
     q_motors_des[di.LeftToeA] =  q_motors_des[di.LeftToeA]  + Kerr*toe_pitch_error
     q_motors_des[di.LeftToeB] = q_motors_des[di.LeftToeB] - Kerr*toe_pitch_error
     q_motors_des[di.RightToeA] = q_motors_des[di.RightToeA] - Kerr*toe_pitch_error
@@ -342,6 +342,7 @@ function send_command_torques(torques, velocities, problem::FabricProblem)
     fallback_opmode = 3
     apply_command = true
     β = 1.2*problem.digit.damping
+    # β[[di.LeftToeA, di.LeftToeB, di.RightToeA, di.RightToeB]] = 0.8*problem.digit.damping[[di.LeftToeA, di.LeftToeB, di.RightToeA, di.RightToeB]]
     # β[[di.LeftShoulderRoll, di.LeftShoulderPitch, di.LeftShoulderYaw, di.LeftElbow,
     # di.RightShoulderRoll, di.RightShoulderPitch, di.RightShoulderYaw, di.RightElbow]] .= 0.8
 

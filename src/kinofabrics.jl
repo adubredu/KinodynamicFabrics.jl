@@ -25,7 +25,7 @@ function made_impact(params)
 end
 
 function transition_to_stand(params)
-    if params[:s] > 0.5 #&& params[:swing_foot] == :right
+    if params[:s] > 0.9 #&& params[:swing_foot] == :right
         return true
     end
     return false
@@ -114,7 +114,7 @@ function compute_alip_foot_placement(params)
     id = params[:swing_foot] == :left ? 4 : 1
     vel_des_st = params[:vel_des_target]
     mass = 46.2104
-    step_width = params[:step_width]
+    step_width = params[:step_width] 
 
     p_com_w = kin.p_COM(params[:q])
     v_com_w = kin.v_COM(params[:q], params[:qdot])
@@ -166,22 +166,7 @@ function compute_alip_foot_placement(params)
     # p_com_wrt_sw_eos_y = -(Lx_des - cosh(lip_constant*Ts)*(Lx_eos_est - mass*vz*yc))/(mass*(zH*lip_constant*sinh(lip_constant*Ts)-vz)*cosh(lip_constant*Ts))
 
 
-
-# % #1 Consider v_com_z
-#                         obj.x0_next_comD = (L_stT_nextstepend_desired_y_comD - cosh(w_lip*T)*L_stT_stepend_est_y_comD - obj.total_mass*cosh(w_lip*T)*cur_xf_comD*v_com(3, :)) /...
-#                             (obj.total_mass*H_com_des*w_lip*sinh(w_lip*T) - obj.total_mass*cosh(w_lip*T)*v_com(3, :));
-#                         % #2 Not consider v_com_z
-# %                         obj.x0_next_comD_no_vcomz = (L_stT_nextstepend_desired_y_comD - cosh(w_lip*T)*L_stT_stepend_est_y_comD) /...
-# %                             (obj.total_mass*H_com_des*w_lip*sinh(w_lip*T));
-#                         % y direction in comD frame
-#                         y0_next_comD = (L_stT_nextstepend_desired_x_comD - cosh(w_lip*T)*L_stT_stepend_est_x_comD + obj.total_mass*cosh(w_lip*T)*cur_yf_comD*v_com(3, :)) /...
-#                             (obj.total_mass*(-H_com_des)*w_lip*sinh(w_lip*T) + obj.total_mass*cosh(w_lip*T)*v_com(3, :));
-
-
-
-
     p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*Ly_eos_est - mass*cosh(lip_constant*Ts) * xc*vz)  /  (mass*zH*lip_constant*sinh(lip_constant*Ts) - mass * cosh(lip_constant*Ts) * vz)
-
     p_com_wrt_sw_eos_y = (Lx_des - cosh(lip_constant*Ts)*Lx_eos_est + mass*cosh(lip_constant*Ts) * yc*vz)  /  (mass*-zH*lip_constant*sinh(lip_constant*Ts) + mass * cosh(lip_constant*Ts) * vz)
 
 
@@ -537,7 +522,7 @@ function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
             s = (prob.t - params[:stand_start_time])/params[:stand_period]
             prob.task_data[:walk][:vel_des_target] = [0,0,0.] 
             if s >= 1.0  && transition_to_stand(prob.task_data[:walk])  
-                prob.xᵨ[:com_target][[3,6]] .= prob.task_data[:walk][:walk_height]
+                # prob.xᵨ[:com_target][[3,6]] .= prob.task_data[:walk][:walk_height]
                 activate_fabric!(:com_target, prob, 1)
                 delete_fabric!(:walk_attractor, prob, 1)
                 prob.task_data[:mm][:standing] = true
@@ -561,7 +546,7 @@ function bimanual_pickup_task_map(q, qdot, qmotors, observation, prob)
     if params[:state] == :descend_init
         t0 = prob.t
         T = params[:flight_time]
-        p0 = 0.0; z0 = kin.p_com_wrt_feet(q)[3]
+        p0 = 0.0; z0 = 0.95#kin.p_com_wrt_feet(q)[3]
         pf = params[:final_pitch]; zf = params[:final_com]        
         pitch(t) = (1 - ((t-t0)/T))*p0 + ((t-t0)/T)*pf
         com_height(t) = (1 - ((t-t0)/T))*z0 + ((t-t0)/T)*zf
@@ -631,7 +616,7 @@ function bimanual_place_task_map(q, qdot, qmotors, observation, prob)
     if params[:state] == :descend_init
         t0 = prob.t 
         T = params[:flight_time]
-        p0 = 0.0; z0 = kin.p_com_wrt_feet(q)[3]
+        p0 = 0.0; z0 = 0.95#kin.p_com_wrt_feet(q)[3]
         pf = params[:final_pitch]; zf = params[:final_com]        
         pitch(t) = (1 - ((t-t0)/T))*p0 + ((t-t0)/T)*pf
         com_height(t) = (1 - ((t-t0)/T))*z0 + ((t-t0)/T)*zf
