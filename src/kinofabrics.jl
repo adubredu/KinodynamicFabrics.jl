@@ -350,6 +350,8 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
 
             # deactivate
             delete_fabric!(:navigate, prob, 3)
+            delete_fabric!(:precise_move, prob, 3)
+            delete_fabric!(:walk_in_place, prob, 3)
             delete_fabric!(:walk, prob, 2)
             delete_fabric!(:walk_attractor, prob, 1)  
             if !prob.task_data[name][:init_start_time]
@@ -368,6 +370,8 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
 
             # deactivate
             delete_fabric!(:navigate, prob, 3)
+            delete_fabric!(:precise_move, prob, 3)
+            delete_fabric!(:walk_in_place, prob, 3)
             delete_fabric!(:walk, prob, 2)
             delete_fabric!(:walk_attractor, prob, 1) 
             if !prob.task_data[name][:init_start_time]
@@ -388,6 +392,8 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
 
             #deactivate
             delete_fabric!(:navigate, prob, 3)
+            delete_fabric!(:precise_move, prob, 3)
+            delete_fabric!(:walk_in_place, prob, 3)
             delete_fabric!(:walk, prob, 2)
             delete_fabric!(:walk_attractor, prob, 1) 
         
@@ -401,6 +407,8 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
             #deactivate
             delete_fabric!(:navigate, prob, 3)
             delete_fabric!(:walk, prob, 2)
+            delete_fabric!(:precise_move, prob, 3)
+            delete_fabric!(:walk_in_place, prob, 3)
             delete_fabric!(:walk_attractor, prob, 1) 
         end
     end
@@ -616,7 +624,7 @@ function bimanual_place_task_map(q, qdot, qmotors, observation, prob)
     if params[:state] == :descend_init
         t0 = prob.t 
         T = params[:flight_time]
-        p0 = 0.0; z0 = 0.95#kin.p_com_wrt_feet(q)[3]
+        p0 = 0.0; z0 = 0.92#kin.p_com_wrt_feet(q)[3]
         pf = params[:final_pitch]; zf = params[:final_com]        
         pitch(t) = (1 - ((t-t0)/T))*p0 + ((t-t0)/T)*pf
         com_height(t) = (1 - ((t-t0)/T))*z0 + ((t-t0)/T)*zf
