@@ -29,10 +29,10 @@ xᵨs[:walk] = [0.4, 0.0, 0.0]
 xᵨs[:left_swing] = [0.0, 0.3, 0.0, 0.0, 0.0, 0.0]
 xᵨs[:upper_body_posture] = [-0.15, 1.1, 0, -0.145, 0.15, -1.1, 0, 0.145]
 xᵨs[:walk_attractor] = [0.0, -0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-xᵨs[:com_target] = [0.0, -0.14, 0.92, -0.0, 0.14, 0.92, 0.0, 0.0]
+xᵨs[:com_target] = [0.0, -0.11, 0.92, -0.0, 0.11, 0.92, 0.0, 0.0]
 xᵨs[:open_arms_posture] = [-0.337, 0.463, -0.253, 0, 0.337, -0.463, 0.253, 0]
-xᵨs[:close_arms_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
-xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5]
+xᵨs[:close_arms_posture] = [0.0, 0.463, 0.3, 0, -0.0, -0.463, -0.3, 0]
+xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.3, -0.5, 0.0, -0.463, -0.3, 0.5]
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 
 # xᵨs[:upper_body_posture]=xᵨs[:close_arms_posture] 
@@ -129,7 +129,7 @@ data[:walk] = Dict(:swing_time=>0.36,
                     :Rz_st=>RotZ(0.0),
                     :indices=>Indices(),
                     :inited=>false,
-                    :step_width=>0.28,
+                    :step_width=>0.22,
                     :digit=>digit 
                     )
 
@@ -140,12 +140,17 @@ data[:mm] = Dict(
                     :digit=>digit,
                     :task_maps=>level1_task_maps,
                     :plan => [ 
-                                (action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=1.0, torso_roll=0.0), 
-                            #   (action_symbol=:precise_move, direction=:side, distance=0.76), 
-                              (action_symbol=:bimanual_pickup, com_height=0.9, torso_pitch=0.3),
+                                (action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=5.0, torso_roll=0.0),  
+                              (action_symbol=:bimanual_pickup, com_height=0.9, torso_pitch=0.35),
                               (action_symbol=:precise_move, direction=:side, distance=-1.5), 
                               (action_symbol=:precise_move, direction=:forward, distance=1.0),
-                              (action_symbol=:bimanual_place, com_height=0.9, torso_pitch=0.2),
+                              (action_symbol=:bimanual_place, com_height=0.9, torso_pitch=0.1),
+
+                            # (action_symbol=:stand, com_height=0.95, torso_pitch=0.0, period=5.0, torso_roll=0.0),
+                            #   (action_symbol=:bimanual_pickup, com_height=0.9, torso_pitch=0.3),
+                            #   (action_symbol=:precise_move, direction=:side, distance=-0.5), 
+                            #   (action_symbol=:precise_move, direction=:forward, distance=0.5), 
+                            #   (action_symbol=:bimanual_place, com_height=0.9, torso_pitch=0.2),
 
 
 
@@ -190,10 +195,12 @@ data[:precise_move] = Dict(
                     :init_position=>[0.0,0.0,0.0],
                     :prev_position=>[0.0,0.0,0.0],
                     :dt=>1e-3,
-                    :lim=>0.15,
+                    :limx=>0.2,
+                    :limy=>0.25,
                     :tolerance=>0.1,
                     :w_start_time=>0.0,
-                    :w_period=>7.0,
+                    :wx_period=>2.5,
+                    :wy_period=>5.0,
                     :stand_start_time=>0.0,
                     :stand_period=>2.0,
 )

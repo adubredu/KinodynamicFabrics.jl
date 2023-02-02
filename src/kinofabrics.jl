@@ -493,7 +493,8 @@ function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
         params[:w_start_time] = prob.t
 
     elseif state == :walk_in_place
-        s = (prob.t - params[:w_start_time])/params[:w_period]
+        period = params[:direction] == :forward ? params[:wx_period] : params[:wy_period]
+        s = (prob.t - params[:w_start_time])/period
         prob.task_data[:walk][:vel_des_target] = [0,0,0.] 
         if s >= 1.0
             params[:state] = :move
@@ -507,7 +508,8 @@ function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
         # @show e
         dedt = e/params[:dt]
         v = -params[:Kp]*e - params[:Kd]*dedt
-        v = clamp(v, -params[:lim], params[:lim])
+        lim = params[:direction] == :forward ? params[:limx] : params[:limy]
+        v = clamp(v, -lim, lim)
         if params[:direction] == :forward u[1] = v else u[2] = v  end
         if abs(e) < params[:tolerance] 
             params[:state] = :purgatory
@@ -569,7 +571,7 @@ function bimanual_pickup_task_map(q, qdot, qmotors, observation, prob)
     elseif params[:state] == :descend
         pitch_traj = params[:pitch_trajectory]
         height_traj = params[:com_height_trajectory] 
-        prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
+        # prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
         prob.xᵨ[:com_target][7] = pitch_traj(prob.t) 
         prob.xᵨ[:upper_body_posture] = prob.xᵨ[:open_arms_posture]  
         if abs(params[:flight_time] - (prob.t - params[:start_time])) < 1e-2
@@ -599,7 +601,7 @@ function bimanual_pickup_task_map(q, qdot, qmotors, observation, prob)
     elseif params[:state] == :ascend
         pitch_traj = params[:pitch_trajectory]
         height_traj = params[:com_height_trajectory] 
-        prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
+        # prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
         prob.xᵨ[:com_target][7] = pitch_traj(prob.t) 
         prob.xᵨ[:upper_body_posture] = prob.xᵨ[:clutch_arms_posture] 
         if abs(params[:flight_time] - (prob.t - params[:start_time])) < 1e-2
@@ -640,7 +642,7 @@ function bimanual_place_task_map(q, qdot, qmotors, observation, prob)
     elseif params[:state] == :descend
         pitch_traj = params[:pitch_trajectory]
         height_traj = params[:com_height_trajectory] 
-        prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
+        # prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
         prob.xᵨ[:com_target][7] = pitch_traj(prob.t)   
         if abs(params[:flight_time] - (prob.t - params[:start_time])) < 1e-2
             params[:state] = :open
@@ -669,7 +671,7 @@ function bimanual_place_task_map(q, qdot, qmotors, observation, prob)
     elseif params[:state] == :ascend
         pitch_traj = params[:pitch_trajectory]
         height_traj = params[:com_height_trajectory] 
-        prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
+        # prob.xᵨ[:com_target][[3, 6]] .= height_traj(prob.t)
         prob.xᵨ[:com_target][7] = pitch_traj(prob.t) 
         if abs(params[:flight_time] - (prob.t - params[:start_time])) < 1e-2
             params[:state] = :stand
