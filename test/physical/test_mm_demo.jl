@@ -29,7 +29,7 @@ xᵨs[:walk] = [0.4, 0.0, 0.0]
 xᵨs[:left_swing] = [0.0, 0.3, 0.0, 0.0, 0.0, 0.0]
 xᵨs[:upper_body_posture] = [-0.15, 1.1, 0, -0.145, 0.15, -1.1, 0, 0.145]
 xᵨs[:walk_attractor] = [0.0, -0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-xᵨs[:com_target] = [0.0, -0.135, 0.92, -0.0, 0.135, 0.92, 0.0, 0.0]
+xᵨs[:com_target] = [0.0, -0.15, 0.92, -0.0, 0.15, 0.92, 0.0, 0.0]
 xᵨs[:open_arms_posture] = [-0.337, 0.463, -0.253, 0, 0.337, -0.463, 0.253, 0]
 xᵨs[:close_arms_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5]
@@ -129,7 +129,7 @@ data[:walk] = Dict(:swing_time=>0.36,
                     :Rz_st=>RotZ(0.0),
                     :indices=>Indices(),
                     :inited=>false,
-                    :step_width=>0.27,
+                    :step_width=>0.3,
                     :digit=>digit 
                     )
 

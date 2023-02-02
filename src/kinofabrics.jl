@@ -117,9 +117,12 @@ function compute_alip_foot_placement(params)
     step_width = params[:step_width]
 
     p_com_w = kin.p_COM(params[:q])
+    v_com_w = kin.v_COM(params[:q], params[:qdot])
     if params[:swing_foot] == :right
         p_left_toe_w = kin.p_toe_pitch_joint_left(params[:q])
         p_com_wrt_st_aligned = params[:Rz_st]' * (p_com_w - p_left_toe_w)
+        v_com_wrt_st_aligned = params[:Rz_st]' * v_com_w  
+
         L = kin.angular_momentum_about_point(params[:q], params[:qdot], p_left_toe_w)
         L_aligned = params[:Rz_st]' * L 
         Lx_st = L_aligned[1]
@@ -127,6 +130,8 @@ function compute_alip_foot_placement(params)
     else
         p_right_toe_w = kin.p_toe_pitch_joint_right(params[:q])
         p_com_wrt_st_aligned = params[:Rz_st]' * (p_com_w - p_right_toe_w)
+        v_com_wrt_st_aligned = params[:Rz_st]' * v_com_w  
+
         L = kin.angular_momentum_about_point(params[:q], params[:qdot], p_right_toe_w)
         L_aligned = params[:Rz_st]' * L
         Lx_st = L_aligned[1]
@@ -134,6 +139,9 @@ function compute_alip_foot_placement(params)
     end
     xc = p_com_wrt_st_aligned[1] 
     yc = p_com_wrt_st_aligned[2]
+    vz = v_com_wrt_st_aligned[3]
+
+    # @show vz
 
 
     if params[:swing_foot] == :right  
@@ -151,8 +159,49 @@ function compute_alip_foot_placement(params)
     Lx_eos_est = -1*mass*zH*lip_constant*sinh(lip_constant*T_r)*yc + cosh(lip_constant*T_r) * Lx_st
     Ly_eos_est = mass*zH*lip_constant*sinh(lip_constant*T_r)*xc + cosh(lip_constant*T_r)*Ly_st 
 
-    p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*Ly_eos_est) / (mass*zH*lip_constant*sinh(lip_constant*Ts))
-    p_com_wrt_sw_eos_y = -(Lx_des - cosh(lip_constant*Ts)*Lx_eos_est) / (mass*zH*lip_constant*sinh(lip_constant*Ts))
+    # p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*Ly_eos_est) / (mass*zH*lip_constant*sinh(lip_constant*Ts))
+    # p_com_wrt_sw_eos_y = -(Lx_des - cosh(lip_constant*Ts)*Lx_eos_est) / (mass*zH*lip_constant*sinh(lip_constant*Ts))
+
+    # p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*(Ly_eos_est + mass*vz*xc))/(mass*(zH*lip_constant*sinh(lip_constant*Ts)-vz)*cosh(lip_constant*Ts))
+    # p_com_wrt_sw_eos_y = -(Lx_des - cosh(lip_constant*Ts)*(Lx_eos_est - mass*vz*yc))/(mass*(zH*lip_constant*sinh(lip_constant*Ts)-vz)*cosh(lip_constant*Ts))
+
+
+
+# % #1 Consider v_com_z
+#                         obj.x0_next_comD = (L_stT_nextstepend_desired_y_comD - cosh(w_lip*T)*L_stT_stepend_est_y_comD - obj.total_mass*cosh(w_lip*T)*cur_xf_comD*v_com(3, :)) /...
+#                             (obj.total_mass*H_com_des*w_lip*sinh(w_lip*T) - obj.total_mass*cosh(w_lip*T)*v_com(3, :));
+#                         % #2 Not consider v_com_z
+# %                         obj.x0_next_comD_no_vcomz = (L_stT_nextstepend_desired_y_comD - cosh(w_lip*T)*L_stT_stepend_est_y_comD) /...
+# %                             (obj.total_mass*H_com_des*w_lip*sinh(w_lip*T));
+#                         % y direction in comD frame
+#                         y0_next_comD = (L_stT_nextstepend_desired_x_comD - cosh(w_lip*T)*L_stT_stepend_est_x_comD + obj.total_mass*cosh(w_lip*T)*cur_yf_comD*v_com(3, :)) /...
+#                             (obj.total_mass*(-H_com_des)*w_lip*sinh(w_lip*T) + obj.total_mass*cosh(w_lip*T)*v_com(3, :));
+
+
+
+
+    p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*Ly_eos_est - mass*cosh(lip_constant*Ts) * xc*vz)  /  (mass*zH*lip_constant*sinh(lip_constant*Ts) - mass * cosh(lip_constant*Ts) * vz)
+
+    p_com_wrt_sw_eos_y = (Lx_des - cosh(lip_constant*Ts)*Lx_eos_est + mass*cosh(lip_constant*Ts) * yc*vz)  /  (mass*-zH*lip_constant*sinh(lip_constant*Ts) + mass * cosh(lip_constant*Ts) * vz)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     p_sw_wrt_st_eos_x = xc_eos_est - p_com_wrt_sw_eos_x
     p_sw_wrt_st_eos_y = yc_eos_est - p_com_wrt_sw_eos_y
