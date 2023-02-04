@@ -153,7 +153,7 @@
       <freejoint/>
       <geom type="sphere" name="green_sphere" pos=".2 .2 .2" size="0.5" rgba="0 1 0 1" class="collision"/>
     </body> -->
-    <body name='base' pos='0 0 1' euler='-0 0 -0'>
+    <body name='base' pos='0 0 0.976' euler='-0 0 -0'>
       <inertial pos='0.001637 0.0002 0.259307' mass='15.028392' fullinertia='0.375905 0.344193 0.098732 -8.8e-05 0.0085 6.6e-05' />
       <joint type='free' limited='false'/>
       <geom type='mesh' mesh='base-0' pos='0 0 0' euler='-0 0 -0' material='base-0'/>

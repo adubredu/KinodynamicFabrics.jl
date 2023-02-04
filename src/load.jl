@@ -1,9 +1,9 @@
 function initialize_configuration!(digit::Digit)
     default_configuration = Dict(
-        "left-hip-roll" => 0.337,
+        "left-hip-roll" => 0.31,
         "left-hip-yaw" => 0.0,
-        "left-hip-pitch" => 0.0,
-        "left-knee" => 0.0,
+        "left-hip-pitch" => 0.2,
+        "left-knee" => 0.19,
         "left-shin" => 0.0,
         "left-tarsus" => 0.0,
         "left-toe-pitch" => -0.126,
@@ -12,10 +12,10 @@ function initialize_configuration!(digit::Digit)
         "left-shoulder-pitch" => 1.1,
         "left-shoulder-yaw" => 0.0,
         "left-elbow" => -0.145,
-        "right-hip-roll" => -0.337,
+        "right-hip-roll" => -0.31,
         "right-hip-yaw" => 0.0,
-        "right-hip-pitch" => 0.0,
-        "right-knee" => 0.0,
+        "right-hip-pitch" => -0.2,
+        "right-knee" => -0.19,
         "right-shin" => 0.0,
         "right-tarsus" => 0.0,
         "right-toe-pitch" => 0.126,
@@ -30,21 +30,31 @@ function initialize_configuration!(digit::Digit)
     end
 end
 
-function load_digit()
+function load_digit(;visualize=false)
     xml_path = joinpath(dirname(pathof(KinodynamicFabrics)), "model/scene.xml")
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
-    viewer = mujoco_viewer.MujocoViewer(model, data) 
     digit = Digit()
     digit.model = model
     digit.data = data
-    digit.viewer = viewer
-    initialize_configuration!(digit)
-    mujoco.set_mjcb_control(obstacle_controller!)
+    initialize_configuration!(digit) 
+    if visualize 
+        viewer = mujoco_viewer.MujocoViewer(model, data, hide_menus=true, 
+                                width=1200, height=900) 
+        digit.viewer = viewer
+    end
     return digit
 end
  
 import Base: step
 function step(digit::Digit)
     mujoco.mj_step(digit.model, digit.data) 
+end
+
+function render_sim(digit, visualize; fps=50)
+    if visualize &&  pyconvert(Bool, digit.viewer.is_alive)
+        if round(pyconvert(Float64, digit.data.time % (fps*digit.Δt)); digits=3) == 0.0            
+            digit.viewer.render()
+        end
+    end
 end

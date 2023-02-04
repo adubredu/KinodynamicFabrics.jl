@@ -6,6 +6,6 @@
     </body>
   </worldbody> 
   <actuator>
-    <motor name='obstacle' joint='obstacle' gear='50' ctrllimited='true' ctrlrange='-1 1' />
+    <motor name='obstacle' joint='obstacle' gear='50' ctrllimited='false' ctrlrange='-1 1' />
   </actuator>
 </mujoco>

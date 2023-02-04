@@ -46,16 +46,15 @@ export Digit,
 export fabric_compute 
 
 # lowlevel
-export fabric_controller,
-        stand_control
+export  fabric_controller! 
 
 # sim
 export load_digit,
         step,
         get_generalized_coordinates,
         apply_motor_torques!,
-        step_obstacle_dynamics!,
-        obstacle_controller!
+        apply_obstacle_force!, 
+        render_sim
 
 # kinematics submodule
 @reexport using .kinematics

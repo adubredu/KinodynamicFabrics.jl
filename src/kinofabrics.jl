@@ -1,5 +1,18 @@
 # helpers
-function update_walking_observation(q, qdot, qmotors, observation, params, problem)
+function compute_task_map_jacobian(t, ψ, θ, θ̇ , prob::FabricProblem)  
+    if t == :walk_attractor
+        params = prob.task_data[:walk]
+        J = params[:swing_foot] == :right ? kin.Jvc_walk_LS(θ) : kin.Jvc_walk_RS(θ)
+        J[:, params[:indices].idx_q_sw_knee_] = J[:, params[:indices].idx_q_sw_knee_] - J[:, params[:indices].idx_q_sw_ShinToTarsus_]
+        J[:, params[:indices].idx_q_st_knee_] = J[:, params[:indices].idx_q_st_knee_] - J[:, params[:indices].idx_q_st_ShinToTarsus_]
+        J[:, params[:indices].idx_q_st_knee_] = J[:, params[:indices].idx_q_st_knee_] + 0.5*J[:, params[:indices].idx_q_st_hippitch_]
+    else
+        J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
+    end 
+    return J
+end
+
+function update_walking_observation(q, qdot, qmotors,  params, problem)
     params[:t] = problem.t
     params[:q] = q
     params[:qdot] = qdot
@@ -279,7 +292,7 @@ end
 ## Task Maps
 
 # Level 4
-function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
+function mobile_manipulation_task_map(θ, θ̇ , qmotors,  prob)
     params = prob.task_data[:mm]
     if !(params[:action_index] > length(params[:plan]))
         current_action = params[:plan][params[:action_index]]
@@ -415,7 +428,7 @@ function mobile_manipulation_task_map(θ, θ̇ , qmotors, observation, prob)
 end
 
 # Level 3
-function navigate_task_map(θ, θ̇ , qmotors, observation, prob)
+function navigate_task_map(θ, θ̇ , qmotors,  prob)
     params = prob.task_data[:navigate]
     state = params[:state]
     # @show state
@@ -458,7 +471,7 @@ function navigate_task_map(θ, θ̇ , qmotors, observation, prob)
     prob.task_data[:walk][:vel_des_target] = u
 end
 
-function walk_in_place_task_map(θ, θ̇ , qmotors, observation, prob)
+function walk_in_place_task_map(θ, θ̇ , qmotors,  prob)
     params = prob.task_data[:walk_in_place]
     state = params[:state]
     u = [0., 0, 0]
@@ -482,7 +495,7 @@ function walk_in_place_task_map(θ, θ̇ , qmotors, observation, prob)
 end
 
 
-function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
+function precise_move_task_map(θ, θ̇ , qmotors,  prob)
     params = prob.task_data[:precise_move]
     state = params[:state]
     @show state
@@ -549,7 +562,7 @@ function precise_move_task_map(θ, θ̇ , qmotors, observation, prob)
     prob.task_data[:walk][:vel_des_target] = u     
 end
 
-function bimanual_pickup_task_map(q, qdot, qmotors, observation, prob)  
+function bimanual_pickup_task_map(q, qdot, qmotors,  prob)  
     params = prob.task_data[:bimanual_pickup]
     # println("state: $(params[:state])")
 
@@ -619,7 +632,7 @@ function bimanual_pickup_task_map(q, qdot, qmotors, observation, prob)
 
 end
 
-function bimanual_place_task_map(q, qdot, qmotors, observation, prob) 
+function bimanual_place_task_map(q, qdot, qmotors,  prob) 
     params = prob.task_data[:bimanual_place]
     # println("state: $(params[:state])")
 
@@ -690,9 +703,9 @@ function bimanual_place_task_map(q, qdot, qmotors, observation, prob)
 end
 
 # Level 2
-function walk_task_map(q, qdot, qmotors, observation, problem)
+function walk_task_map(q, qdot, qmotors,  problem)
     params = problem.task_data[:walk]
-    update_walking_observation(q, qdot, qmotors, observation, params, problem)
+    update_walking_observation(q, qdot, qmotors,  params, problem)
     init_params(params)
     check_stance_switch(params)  
     fp = compute_alip_foot_placement(params)
@@ -705,7 +718,7 @@ function walk_task_map(q, qdot, qmotors, observation, problem)
     problem.xᵨ[:walk_attractor] = [vc..., vcdot...] 
 end
 
-function stand_task_map(q, qdot, qmotors, observation, prob)
+function stand_task_map(q, qdot, qmotors,  prob)
     params = prob.task_data[:stand]
     state = params[:state]
     if state == :init
@@ -730,7 +743,7 @@ function stand_task_map(q, qdot, qmotors, observation, prob)
 
 end
 
-function cornhole_task_map(q, qdot, qmotors, observation, prob)
+function cornhole_task_map(q, qdot, qmotors,  prob)
     params = prob.task_data[:cornhole]
     state = params[:state]
     @show state
@@ -829,8 +842,8 @@ end
 
 
 # Level 1
-function walk_attractor_task_map(q, qdot, problem)
-    params = problem.task_data[:walk]
+function walk_attractor_task_map(q, qdot, prob::FabricProblem)
+    params = prob.task_data[:walk]
     q[params[:indices].idx_q_st_KneeToShin_] = 0.0
     q[params[:indices].idx_q_sw_KneeToShin_] = 0.0
     q[params[:indices].idx_q_st_ShinToTarsus_] = -q[params[:indices].idx_q_st_knee_]
@@ -910,7 +923,7 @@ end
 
 
 ## Solve
-function mm_fabric_eval(x, ẋ, name::Symbol, prob::FabricProblem)
+function fabric_eval(x, ẋ, name::Symbol, prob::FabricProblem)
     M = nothing; ẍ = nothing 
     fabricname = Symbol(name, :_fabric)
     ϕ = eval(fabricname)
@@ -918,87 +931,56 @@ function mm_fabric_eval(x, ẋ, name::Symbol, prob::FabricProblem)
     return (M, ẍ)
 end
 
-function compute_task_map_jacobian(t, ψ, θ, θ̇ , prob::FabricProblem)  
-    if t == :walk_attractor
-        params = prob.task_data[:walk]
-        J = params[:swing_foot] == :right ? kin.Jvc_walk_LS(θ) : kin.Jvc_walk_RS(θ)
-        J[:, params[:indices].idx_q_sw_knee_] = J[:, params[:indices].idx_q_sw_knee_] - J[:, params[:indices].idx_q_sw_ShinToTarsus_]
-        J[:, params[:indices].idx_q_st_knee_] = J[:, params[:indices].idx_q_st_knee_] - J[:, params[:indices].idx_q_st_ShinToTarsus_]
-        J[:, params[:indices].idx_q_st_knee_] = J[:, params[:indices].idx_q_st_knee_] + 0.5*J[:, params[:indices].idx_q_st_hippitch_]
-    else
-        J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
-    end 
-    return J
-end
-
-function mm_fabric_solve(θ, θ̇ , qmotors, observation, prob::FabricProblem)
+function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
     xₛ = []; ẋₛ = []; cₛ = []; qvel = zero(θ)
     Mₛ = []; ẍₛ = []; Jₛ =  [] 
     for t in prob.ψ[:level4]
         ψ = eval(Symbol(t, :_task_map))
-        ψ(θ, θ̇ , qmotors, observation, prob)
+        ψ(θ, θ̇ , qmotors,  prob)
     end
     for t in prob.ψ[:level3]
         ψ = eval(Symbol(t, :_task_map))
-        ψ(θ, θ̇ , qmotors, observation, prob)
+        ψ(θ, θ̇ , qmotors,  prob)
     end
     for t in prob.ψ[:level2]
         ψ = eval(Symbol(t, :_task_map))
-        ψ(θ, θ̇ , qmotors, observation, prob)
+        ψ(θ, θ̇ , qmotors,  prob)
     end 
-    for t in prob.task_data[:mm][:task_maps]
+    for t in prob.ψ[:level1]
         ψ = eval(Symbol(t, :_task_map))
-        S = prob.S[t] 
-        J = compute_task_map_jacobian(t, ψ, θ, θ̇ , prob)  
+        S = prob.S[t]  
+        J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
         J = J*S 
         x = ψ(θ, θ̇ , prob)  
         ẋ = J*θ̇ 
         c = zero(x) 
-        M, ẍ = mm_fabric_eval(x, ẋ, t, prob)  
-        if t == :walk_attractor qvel = J\prob.xᵨ[:walk_attractor][5:end] end
-        if t in prob.ψ[:level1]
-            push!(xₛ, x); push!(ẋₛ, ẋ); push!(cₛ, c)
-            push!(Mₛ, M); push!(ẍₛ, ẍ); push!(Jₛ, J)
-        end
+        M, ẍ = fabric_eval(x, ẋ, t, prob)   
+        push!(xₛ, x); push!(ẋₛ, ẋ); push!(cₛ, c)
+        push!(Mₛ, M); push!(ẍₛ, ẍ); push!(Jₛ, J) 
     end   
     Mᵣ = sum([J' * M * J for (J, M) in zip(Jₛ, Mₛ)])
     fᵣ = sum([J' * M * (ẍ - c) for (J, M, ẍ, c) in zip(Jₛ, Mₛ, ẍₛ, cₛ)])
     Mᵣ = convert(Matrix{Float64}, Mᵣ)  
     q̈ = pinv(Mᵣ) * fᵣ
-    return  q̈, qvel  
+    return  q̈  
 end
 
-function mm_fabric_compute(q, qdot, qmotors, observation, problem)
-    θ̈d, qvel = mm_fabric_solve(copy(q), copy(qdot), qmotors, observation, problem) 
+function fabric_compute(q, qdot, qmotors,  problem)
+    θ̈d = fabric_solve(copy(q), copy(qdot), qmotors,  problem) 
     θ̇d = θ̈d
-    θd = q + θ̇d
+    θd = q + θ̇d*problem.Δt
 
     q_out = copy(q)
     qdot_out = copy(qdot)
 
-    if problem.task_data[:mm][:standing]
-        θd = q + θ̇d*1e-1
-        q_out[problem.digit.leg_joint_indices] = θd[problem.digit.leg_joint_indices]
-        q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices] 
-    else
-        params = problem.task_data[:walk]
-        indices = [params[:indices].idx_q_sw_hiproll_, params[:indices].idx_q_sw_hippitch_, params[:indices].idx_q_sw_knee_, params[:indices].idx_q_st_knee_]
-        q_out[indices] = θd[indices]
-        qdot_out[indices] = qvel[indices]+ θ̇d[indices]
-        q_out[problem.digit.arm_joint_indices] = q[problem.digit.arm_joint_indices] + θ̇d[problem.digit.arm_joint_indices]*1e-1
-    end
-    qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices] 
+    q_out[problem.digit.leg_joint_indices] = θd[problem.digit.leg_joint_indices]
+    q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices] 
+
+    qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices]
+    qdot_out[problem.digit.leg_joint_indices] = θ̇d[problem.digit.leg_joint_indices] 
 
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
-    qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max)
-
-    # q_out = filter_coordinates(q_out, problem, :pos)
-    # qdot_out = filter_coordinates(qdot_out, problem, :vel)
-    # qdot_out = zero(qdot_out)
-    # push!(problem.task_data[:diagnostics][:q], q_out[problem.digit.leg_joint_indices])
-    # push!(problem.task_data[:diagnostics][:qdot], qdot_out[problem.digit.leg_joint_indices])
-    # push!(problem.task_data[:diagnostics][:t], problem.t)
-    
+    qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max) 
 
     τ = zero(q_out) 
     return  q_out, qdot_out, τ

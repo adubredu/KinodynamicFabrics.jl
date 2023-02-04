@@ -8,10 +8,7 @@ function set_obstacle_position!(pos::Vector{Float64}, digit::Digit)
     digit.data.joint("obstacle").qpos[0:2] = pos 
 end
 
-function apply_obstacle_force!(model, data)
-    data.actuator("obstacle").ctrl[0] = -10.0#digit.obstacle_force
+function apply_obstacle_force!(digit)
+    digit.data.actuator("obstacle").ctrl[0] = digit.obstacle_force
 end
-
-function obstacle_controller!(model, data)
-    apply_obstacle_force!(model, data)
-end
+ 
