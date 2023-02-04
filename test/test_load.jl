@@ -16,3 +16,9 @@ end
 digit.viewer.close()
 
 q, qdot, qmotors = get_generalized_coordinates(digit)
+
+
+
+#= 
+5.2kHz data reception speed
+=#

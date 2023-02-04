@@ -1,8 +1,7 @@
 <mujoco model="sphere"> 
   <worldbody> 
-    <body name="box_and_sphere" pos='2 0 5' euler="0 0 0">
-      <!-- <joint name="freej" type="free"/> -->
-      <freejoint/>
+    <body name="obstacle" pos='2 0 5' euler="0 0 0">
+      <joint name="obstacle" type="free"/> 
       <geom type="sphere" name="green_sphere" pos=".2 .2 .2" size="0.15" rgba="0 1 0 1" class="collision"/>
     </body>
   </worldbody> 
