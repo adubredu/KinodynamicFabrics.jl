@@ -5,10 +5,8 @@ using FiniteDiff
 using Reexport
 using Rotations
 using LinearAlgebra
-using DigitInterface
-using GLMakie 
-using WebSockets, JSON
-using Gauntlet
+using DigitInterface   
+using CSV
 
 include("types.jl")
 include("utils.jl")
