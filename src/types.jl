@@ -17,18 +17,6 @@ mutable struct FabricProblem
     t
 end
 
-mutable struct PotentialProblem
-    θ
-    θ̇  
-    tasks::Vector{Symbol}
-    W::Dict
-    sys
-    xᵨ::Dict
-    S::Dict
-    env
-    Δt::Float64
-end
-
 struct CubicBezier 
     p₀::AbstractArray
     τ₀::AbstractArray
@@ -37,26 +25,34 @@ struct CubicBezier
 end
 
 di = DigitInterface
-mutable struct DigitBody
+mutable struct Digit
     θ_min
     θ_max
     θ̇_min
-    θ̇_max
-    gripper
-    arm_joint_indices
-    leg_joint_indices
-    motor_indices
-    damping
-    function DigitBody()
+    θ̇_max 
+    joint_names
+    motor_names  
+    model
+    data
+    viewer
+    function Digit()
         θ_min = [-1.797e+308, -1.797e+308, -1.797e+308, -1.797e+308, -1.797e+308, -1.797e+308, -1.0472, -0.698132, -1.0472, -1.2392, -0.35, -0.8779, -0.785398163397, -0.6109, -1.309, -2.5307, -1.7453, -1.3526, -1.0472, -0.698132, -1.57079632679, -0.8727, -0.35, -1.2497, -0.785398163397, -0.6109, -1.309, -2.5307, -1.7453, -1.3526]
         θ_max = [1.797e+308, 1.797e+308, 1.797e+308, 1.797e+308, 1.797e+308, 1.797e+308,  1.0472, 0.698132, 1.57079632679, 0.8727, 0.35, 1.2497, 0.785398163397, 0.6109, 1.309, 2.5307, 1.7453, 1.3526, 1.0472, 0.698132, 1.0472, 1.2392, 0.35, 0.8779, 0.785398163397, 0.6109, 1.309, 2.5307, 1.7453, 1.3526] 
 	    θ̇_min = [-1.797e+308, -1.797e+308, -1.797e+308, -1.797e+308, -1.797e+308, -1.797e+308, -4.58149, -7.33038, -8.50848, -8.50848, -100, -100, -11.5192, -11.5192, -4.58149, -4.58149, -7.33038, -4.58149, -4.58149, -7.33038, -8.50848, -8.50848, -100,-100, -11.5192, -11.5192, -4.58149, -4.58149, -7.33038, -4.58149]
         θ̇_max = [1.797e+308, 1.797e+308, 1.797e+308, 1.797e+308, 1.797e+308, 1.797e+308, 4.58149, 7.33038, 8.50848,8.50848, 100, 100, 11.5192, 11.5192, 4.58149, 4.58149, 7.33038, 4.58149, 4.58149, 7.33038, 8.50848, 8.50848, 100, 100, 11.5192, 11.5192, 4.58149, 4.58149, 7.33038, 4.58149]
-        damping = [66.849046, 26.112909, 38.05002, 38.05002, 28.553161, 28.553161, 66.849046, 26.112909, 38.05002, 38.05002, 28.553161, 28.553161, 66.849046, 66.849046, 26.112909, 66.849046, 66.849046, 66.849046, 26.112909, 66.849046]
-        arm_joint_indices = [di.qleftShoulderRoll, di.qleftShoulderPitch, di.qleftShoulderYaw, di.qleftElbow, di.qrightShoulderRoll, di.qrightShoulderPitch, di.qrightShoulderYaw, di.qrightElbow]
-        leg_joint_indices = [di.qleftHipRoll, di.qleftHipPitch, di.qleftKnee, di.qrightHipRoll, di.qrightHipPitch, di.qrightKnee]
-        motor_indices = [7, 8, 9, 10, 13,14, 19, 20, 21, 22, 25, 26, 15,16,17,18, 27,28,29,30]
-        new(θ_min, θ_max, θ̇_min, θ̇_max, nothing, arm_joint_indices, leg_joint_indices, motor_indices, damping)
+        joint_names = ["left-hip-roll", "left-hip-yaw", "left-hip-pitch", 
+            "left-knee", "left-shin", "left-tarsus", "left-toe-pitch", 
+            "left-toe-roll", "left-shoulder-roll", "left-shoulder-pitch", 
+            "left-shoulder-yaw", "left-elbow", "right-hip-roll", "right-hip-yaw", 
+            "right-hip-pitch", "right-knee", "right-shin", "right-tarsus", 
+            "right-toe-pitch", "right-toe-roll", "right-shoulder-roll", 
+            "right-shoulder-pitch", "right-shoulder-yaw", "right-elbow"]
+        motor_names = ["left-hip-roll", "left-hip-yaw", "left-hip-pitch", 
+            "left-knee", "left-toe-A", "left-toe-B",  "right-hip-roll", "right-hip-yaw", 
+            "right-hip-pitch", "right-knee", "right-toe-A", "right-toe-B", "left-shoulder-roll", "left-shoulder-pitch", 
+            "left-shoulder-yaw", "left-elbow", "right-shoulder-roll", 
+            "right-shoulder-pitch", "right-shoulder-yaw", "right-elbow"]
+        new(θ_min, θ_max, θ̇_min, θ̇_max, joint_names, motor_names, nothing, nothing, nothing)
     end
 end
 

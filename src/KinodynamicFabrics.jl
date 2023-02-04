@@ -7,6 +7,8 @@ using Rotations
 using LinearAlgebra
 using DigitInterface   
 using CSV
+using MuJoCo
+using MuJoCo.PythonCall
 
 include("types.jl")
 include("utils.jl")
@@ -15,6 +17,9 @@ include("kinematics/kinematics.jl")
 include("dynamics/dynamics.jl")
 include("kinofabrics.jl")
 include("lowlevel.jl")
+
+include("load.jl")
+include("get.jl")
 
 export FabricProblem
 
@@ -33,15 +38,20 @@ export jvp,
        wrap_angle,
        behavior_switcher
 
-export DigitBody,
+export Digit,
         Indices
 
 # fabrics
-export mm_fabric_compute 
+export fabric_compute 
 
 # lowlevel
-export mm_fabric_controller,
+export fabric_controller,
         stand_control
+
+# sim
+export load_digit,
+        step,
+        get_generalized_coordinates
 
 # kinematics submodule
 @reexport using .kinematics
