@@ -18,8 +18,9 @@ include("dynamics/dynamics.jl")
 include("kinofabrics.jl")
 include("lowlevel.jl")
 
-include("load.jl")
+include("set.jl")
 include("get.jl")
+include("load.jl")
 
 export FabricProblem
 
@@ -51,7 +52,10 @@ export fabric_controller,
 # sim
 export load_digit,
         step,
-        get_generalized_coordinates
+        get_generalized_coordinates,
+        apply_motor_torques!,
+        step_obstacle_dynamics!,
+        obstacle_controller!
 
 # kinematics submodule
 @reexport using .kinematics
