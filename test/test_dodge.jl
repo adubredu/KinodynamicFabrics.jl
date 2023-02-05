@@ -85,7 +85,7 @@ problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
 zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
 
 digit.problem = problem
-digit.obstacle_force = -0.15
+digit.obstacle_force = -0.2
 step(digit)
 
 #Horizon
