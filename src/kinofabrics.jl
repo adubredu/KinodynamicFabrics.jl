@@ -896,7 +896,7 @@ function dodge_task_map(θ, θ̇ , prob::FabricProblem)
     com_pos =  kin.p_com_wrt_feet(θ)
     Rz = RotZ(θ[di.qbase_yaw]) 
     com = [(Rz * com_pos[1:3])..., (Rz * com_pos[4:6])...]
-    com[[3, 6]] .+= 0.5
+    com[[3, 6]] .+= 0.4
     pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
     obs_pose = prob.task_data[:obstacle][:position]
     radius = prob.task_data[:obstacle][:radius]
