@@ -43,7 +43,7 @@ xᵨs[:lower_body_posture] = [0.31, 0.2, 0.19, -0.31, -0.2, -0.19]
 ## Task weights
 Ws = Dict()
 Ws[:upper_body_posture] = 1e0
-Ws[:lower_body_posture] = 1e-1
+Ws[:lower_body_posture] = 1e0
 Ws[:com_target] = 1e0
 Ws[:dodge] = 0.3e1
 
@@ -85,11 +85,11 @@ problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
 zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
 
 digit.problem = problem
-digit.obstacle_force = -0.2
+digit.obstacle_force = -0.5
 step(digit)
 
 #Horizon
-T = 20 # seconds
+T = 10 # seconds
 Horizon = T/digit.Δt # timesteps
 
 for i = 1:Horizon
@@ -104,5 +104,5 @@ if visualize digit.viewer.close() end
 #=
 conquered: 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 
            0.035, 0.05, 0.07, 0.075, 0.08, 0.085,
-           0.09, 0.1
+           0.09, 0.1, 0.2, 0.3, 0.4, 0.5
 =#
