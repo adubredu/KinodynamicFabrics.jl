@@ -45,10 +45,18 @@ function load_digit(;visualize=false)
     end
     return digit
 end
+
+function update_obstacle_position!(digit::Digit)
+    p = digit.data.body("obstacle").xpos
+    digit.problem.task_data[:obstacle][:position][1] = pyconvert(Float64, p[0])
+    digit.problem.task_data[:obstacle][:position][2] = pyconvert(Float64, p[1])
+    digit.problem.task_data[:obstacle][:position][3] = pyconvert(Float64, p[2])
+end
  
 import Base: step
 function step(digit::Digit)
     mujoco.mj_step(digit.model, digit.data) 
+    update_obstacle_position!(digit)
 end
 
 function render_sim(digit, visualize; fps=50)

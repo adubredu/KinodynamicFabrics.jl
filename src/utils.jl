@@ -22,6 +22,13 @@ function get_closest_point(o::Vector{Float64}, x, prob::FabricProblem)
     return cp
 end
 
+function get_closest_point(x, prob)
+    c = prob.task_data[:obstacle][:position]
+    r = prob.task_data[:obstacle][:radius]
+    cp = c + r/(norm(x-c))*(x-c)
+    return
+end
+
 #= 
 https://wrfranklin.org/Research/Short_Notes/pnpoly.html
 =#

@@ -840,6 +840,10 @@ function cornhole_task_map(q, qdot, qmotors,  prob)
 
 end
 
+function avoid_task_map(q, qdot, qmotors, prob)
+
+end
+
 
 # Level 1
 function walk_attractor_task_map(q, qdot, prob::FabricProblem)
@@ -866,6 +870,10 @@ function upper_body_posture_task_map(θ, θ̇ , prob::FabricProblem)
     return θ[prob.digit.arm_joint_indices]
 end
 
+function lower_body_posture_task_map(θ, θ̇ , prob::FabricProblem)
+    return θ[prob.digit.leg_joint_indices]
+end
+
 function com_target_task_map(θ, θ̇ , prob::FabricProblem)
     S = prob.S[:com_target]
     θ = S*θ 
@@ -878,6 +886,22 @@ function com_target_task_map(θ, θ̇ , prob::FabricProblem)
     com = [(Rz * com_pos[1:3])..., (Rz * com_pos[4:6])...]
     res = com
     return res
+end
+
+function dodge_task_map(θ, θ̇ , prob::FabricProblem)
+    # S = prob.S[:com_target]
+    # θ = S*θ 
+    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
+    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
+    com_pos =  kin.p_com_wrt_feet(θ)
+    Rz = RotZ(θ[di.qbase_yaw]) 
+    com = [(Rz * com_pos[1:3])..., (Rz * com_pos[4:6])...]
+    com[[3, 6]] .+= 0.5
+    pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
+    obs_pose = prob.task_data[:obstacle][:position]
+    radius = prob.task_data[:obstacle][:radius]
+    Δ = [(norm(pose-obs_pose)/radius) - 1]
+    return Δ
 end
 
 
@@ -908,7 +932,19 @@ function upper_body_posture_fabric(x, ẋ, prob::FabricProblem)
     return (M, ẍ) 
 end
 
-function com_target_fabric(x, ẋ, prob::FabricProblem; α=40.0, β=40.0, ϵ=0.01)
+function lower_body_posture_fabric(x, ẋ, prob::FabricProblem) 
+    λᵪ = 0.25; k = 4.0;  β=0.75
+    M = λᵪ * I(length(x))
+    W = prob.W[:lower_body_posture] 
+    k = W*k 
+    Δx = x - prob.xᵨ[:lower_body_posture]
+    ψ(θ) = 0.5*θ'*k*θ
+    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
+    ẍ = -k*δx - β*ẋ
+    return (M, ẍ) 
+end
+
+function com_target_fabric(x, ẋ, prob::FabricProblem)
     k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25 
     N = length(x)
     W = prob.W[:com_target]
@@ -918,6 +954,19 @@ function com_target_fabric(x, ẋ, prob::FabricProblem; α=40.0, β=40.0, ϵ=0.0
     δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
     ẍ = -k*δx -β*ẋ 
     M = λ * I(N)
+    return (M, ẍ)
+end
+
+function dodge_fabric(x, ẋ, prob::FabricProblem)
+    W = prob.W[:dodge]; k=1.0
+    K = W*k
+    max_range = prob.task_data[:obstacle][:max_range]
+    s = [v > max_range ? 0.0 : 1.0 for v in x]
+    ϕ(σ) = (K/2) .* s .* (max_range .- σ)./(max_range .* σ).^2
+    δₓ = FiniteDiff.finite_difference_jacobian(ϕ, x) 
+    ẍ=-K*diag(δₓ)  
+    M = norm(ẍ)*I(length(x))
+    @show x, ẍ
     return (M, ẍ)
 end
 

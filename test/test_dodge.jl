@@ -20,12 +20,12 @@ xᵨs = Dict()
 
 # level 1 
 xᵨs[:upper_body_posture] = [-0.15, 1.1, 0, -0.145, 0.15, -1.1, 0, 0.145] 
-xᵨs[:com_target] = [0.0, -0.15, 0.92, -0.0, 0.15, 0.92, 0.0, 0.0]
+xᵨs[:com_target] = [0.0, -0.15, 0.9, -0.0, 0.15, 0.9, 0.0, 0.0]
 xᵨs[:open_arms_posture] = [-0.337, 0.463, -0.253, 0, 0.337, -0.463, 0.253, 0]
 xᵨs[:close_arms_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5]
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
-xᵨs[:upper_body_posture] = xᵨs[:close_arms_posture]
+xᵨs[:lower_body_posture] = [0.31, 0.2, 0.19, -0.31, -0.2, -0.19]
 
 ## task maps
 ψs = Dict() 
@@ -34,15 +34,18 @@ xᵨs[:upper_body_posture] = xᵨs[:close_arms_posture]
 ψs[:level2] = [] 
 ψs[:level1] = [
                 :upper_body_posture,
-                :com_target 
+                # :lower_body_posture,
+                :com_target,
+                :dodge
                ] 
 
 
 ## Task weights
 Ws = Dict()
 Ws[:upper_body_posture] = 1e0
+Ws[:lower_body_posture] = 1e1
 Ws[:com_target] = 1e0
-Ws[:dodge] = 1e0
+Ws[:dodge] = 0.5e1
 
 ## Priorities
 Pr = Dict()
@@ -64,6 +67,7 @@ S_arm = diagm(s_arm)
 
 Ss = Dict() 
 Ss[:upper_body_posture] = S_arm 
+Ss[:lower_body_posture] = S_leg
 Ss[:com_target] = S_leg  
 Ss[:dodge] = S_leg  
 
@@ -71,7 +75,7 @@ data = Dict()
 data[:obstacle] = Dict(
                 :radius=>0.15,
                 :position=>zeros(3),
-                :max_range=>0.5
+                :max_range=>10.0
 )
 
 Js = nothing
@@ -81,11 +85,11 @@ problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
 zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
 
 digit.problem = problem
-digit.obstacle_force = -0.0
+digit.obstacle_force = -0.035
 step(digit)
 
 #Horizon
-T = 5 # seconds
+T = 20 # seconds
 Horizon = T/digit.Δt # timesteps
 
 for i = 1:Horizon
@@ -96,3 +100,7 @@ for i = 1:Horizon
 end
 
 if visualize digit.viewer.close() end
+
+#=
+conquered: 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 
+=#
