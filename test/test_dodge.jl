@@ -45,7 +45,7 @@ Ws = Dict()
 Ws[:upper_body_posture] = 1e0
 Ws[:lower_body_posture] = 1e1
 Ws[:com_target] = 1e0
-Ws[:dodge] = 0.5e1
+Ws[:dodge] = 0.3e1
 
 ## Priorities
 Pr = Dict()
@@ -85,7 +85,7 @@ problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
 zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
 
 digit.problem = problem
-digit.obstacle_force = -0.035
+digit.obstacle_force = -0.07
 step(digit)
 
 #Horizon
@@ -103,4 +103,5 @@ if visualize digit.viewer.close() end
 
 #=
 conquered: 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 
+           0.035, 0.05, 0.07
 =#
