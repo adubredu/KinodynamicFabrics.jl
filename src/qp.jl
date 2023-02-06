@@ -5,15 +5,15 @@ function initialize_solver(N; Δt=1e-3)
     return model
 end
 
-function build_attractors(tasks::AbstractArray{KinTask}, θ, Δt; K=0.5) 
+function build_attractors(θ, θ̇, prob; K=0.5) 
     Js = []
     vs = []
     ws = [] 
-    for task in tasks 
-        if task.name != :com_limit && task.name != :dodge
-            S = task.selection_matrix
-            push!(Js, task.task_map_jacobian(θ)*S)
-            push!(ws, task.weight)
+    for task in in prob.ψ[:level1] 
+        if task != :com_limit && task != :dodge
+            S = prob.S[:task]
+            push!(Js, prob.J[:task](θ)*S)
+            push!(ws, prob.W[:task])
             p_current = task.task_map(θ)
             e = pose_error(task.target, vec(p_current))
             push!(vs, K*e)
@@ -22,14 +22,14 @@ function build_attractors(tasks::AbstractArray{KinTask}, θ, Δt; K=0.5)
     return Js, vs, ws
 end
 
-function qp_solve(θ, θ̇, prob)
+function qp_compute(θ, θ̇, qmotors, prob)
     model = prob.model
     tasks = prob.tasks 
     qlims = prob.qlims 
 
     Δt = prob.Δt
     q̇ = model.obj_dict[:q̇]
-    Js, vs, ws = build_attractors(tasks, θ, Δt) 
+    Js, vs, ws = build_attractors(θ, θ̇, prob) 
     q̇_min, q̇_max = compute_velocity_limits(θ, qlims, Δt)   
 
     @objective(model, Min, 
@@ -44,5 +44,22 @@ function qp_solve(θ, θ̇, prob)
     optimize!(model)
     Δq = value.(q̇)
     q̇sol = Δq/Δt
-    return θ+Δq, q̇sol, zero(θ)
+
+    θd = θ+Δq*problem.Δt
+    θ̇d = q̇sol
+
+    q_out = copy(q)
+    qdot_out = copy(qdot)
+
+    q_out[problem.digit.leg_joint_indices] = θd[problem.digit.leg_joint_indices]
+    q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices] 
+
+    qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices]
+    qdot_out[problem.digit.leg_joint_indices] = θ̇d[problem.digit.leg_joint_indices] 
+
+    q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
+    qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max) 
+
+    τ = zero(q_out) 
+    return  q_out, qdot_out, τ
 end

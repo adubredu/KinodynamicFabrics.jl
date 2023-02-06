@@ -869,31 +869,31 @@ function com_target_task_map(θ, θ̇ , prob::FabricProblem)
 end
 
 function dodge_task_map(θ, θ̇ , prob::FabricProblem) 
-    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
-    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
-    com_pos =  kin.p_com_wrt_feet(θ)
-    Rz = RotZ(θ[di.qbase_yaw]) 
-    com = [(Rz * com_pos[1:3])..., (Rz * com_pos[4:6])...]
-    com[[3, 6]] .+= 0.37
-    pose = [0.1+sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
-    R = RotZYX([θ[di.qbase_yaw], θ[di.qbase_pitch], θ[di.qbase_roll]]...)
-    pose = R*pose
-    obs_pose = prob.task_data[:obstacle][:position]
-    radius = prob.task_data[:obstacle][:radius]
-    Δ = [(norm(pose-obs_pose)/radius) - 1]
-    return Δ
-
     # θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
     # θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
-    # com =  kin.p_base_wrt_feet(θ) 
-    # com[[3, 6]] .+= 0.5
-    # pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
+    # com_pos =  kin.p_com_wrt_feet(θ)
+    # Rz = RotZ(θ[di.qbase_yaw]) 
+    # com = [(Rz * com_pos[1:3])..., (Rz * com_pos[4:6])...]
+    # com[[3, 6]] .+= 0.37
+    # pose = [0.1+sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
     # R = RotZYX([θ[di.qbase_yaw], θ[di.qbase_pitch], θ[di.qbase_roll]]...)
     # pose = R*pose
     # obs_pose = prob.task_data[:obstacle][:position]
     # radius = prob.task_data[:obstacle][:radius]
     # Δ = [(norm(pose-obs_pose)/radius) - 1]
     # return Δ
+
+    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
+    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
+    com =  kin.p_base_wrt_feet(θ) 
+    com[[3, 6]] .+= 0.3
+    pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
+    R = RotZYX([θ[di.qbase_yaw], θ[di.qbase_pitch], θ[di.qbase_roll]]...)
+    pose = R*pose
+    obs_pose = prob.task_data[:obstacle][:position]
+    radius = prob.task_data[:obstacle][:radius]
+    Δ = [(norm(pose-obs_pose)/radius) - 1]
+    return Δ
 end
 
 
@@ -1084,14 +1084,19 @@ function fabric_compute(q, qdot, qmotors,  problem)
     θ̇d = θ̈d
     θd = q + θ̇d*problem.Δt
 
+    toe_indices = [di.qleftToePitch, di.qleftToeRoll, di.qrightToePitch, di.qrightToeRoll]
+
     q_out = copy(q)
     qdot_out = copy(qdot)
 
     q_out[problem.digit.leg_joint_indices] = θd[problem.digit.leg_joint_indices]
-    q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices] 
+    q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices]
+    q_out[toe_indices] = θd[toe_indices]  
 
     qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices]
     qdot_out[problem.digit.leg_joint_indices] = θ̇d[problem.digit.leg_joint_indices] 
+    qdot_out[toe_indices] = θ̇d[toe_indices] 
+
 
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
     qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max) 

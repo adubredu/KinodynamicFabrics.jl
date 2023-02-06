@@ -45,8 +45,11 @@ export Digit,
 # fabrics
 export fabric_compute 
 
+export qp_compute
+
 # lowlevel
-export  fabric_controller! 
+export  fabric_controller!,
+        qp_controller!
 
 # sim
 export load_digit,

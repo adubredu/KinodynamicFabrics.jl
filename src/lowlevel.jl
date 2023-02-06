@@ -76,28 +76,21 @@ function compute_motor_torques(q, qdot, qdes, qdotdes, q_motors, problem)
     com_midpoint_error = p_com_aligned - 0.5 * (p_left_toe_aligned + p_right_toe_aligned)
     toe_pitch_error = com_midpoint_error[1] 
     Kerr = 1.3
-    q_motors_des[di.LeftToeA] =  q_motors_des[di.LeftToeA]  + Kerr*toe_pitch_error
-    q_motors_des[di.LeftToeB] = q_motors_des[di.LeftToeB] - Kerr*toe_pitch_error
-    q_motors_des[di.RightToeA] = q_motors_des[di.RightToeA] - Kerr*toe_pitch_error
-    q_motors_des[di.RightToeB] = q_motors_des[di.RightToeB] + Kerr*toe_pitch_error 
+    # q_motors_des[di.LeftToeA] =  q_motors_des[di.LeftToeA]  + Kerr*toe_pitch_error
+    # q_motors_des[di.LeftToeB] = q_motors_des[di.LeftToeB] - Kerr*toe_pitch_error
+    # q_motors_des[di.RightToeA] = q_motors_des[di.RightToeA] - Kerr*toe_pitch_error
+    # q_motors_des[di.RightToeB] = q_motors_des[di.RightToeB] + Kerr*toe_pitch_error 
 
-
-    # zmp_midpoint_error = pz_aligned - 0.5 * (p_left_toe_aligned + p_right_toe_aligned)
-    # toe_pitch_error = zmp_midpoint_error[1]
-    # toe_pitch_error = com_midpoint_error[1] 
-
-    # Kerr = 1.3
-    
-    # toe_pitch = q[di.qleftToePitch] - Kerr*toe_pitch_error
-    # toe_roll = q[di.qleftToeRoll]
-    # rtoeA = kin.qm_toe(-toe_pitch, -toe_roll, "a", "right")
-    # rtoeB = kin.qm_toe(-toe_pitch, -toe_roll, "b", "right")
-    # ltoeA = kin.qm_toe(toe_pitch, toe_roll, "a", "left")
-    # ltoeB = kin.qm_toe(toe_pitch, toe_roll, "b", "left")
-    # q_motors_des[di.RightToeA] = rtoeA
-    # q_motors_des[di.RightToeB] = rtoeB
-    # q_motors_des[di.LeftToeA] = ltoeA
-    # q_motors_des[di.LeftToeB] = ltoeB
+    toe_pitch = qdes[di.qleftToePitch] - Kerr*toe_pitch_error
+    toe_roll = qdes[di.qleftToeRoll]
+    rtoeA = kin.qm_toe(-toe_pitch, -toe_roll, "a", "right")
+    rtoeB = kin.qm_toe(-toe_pitch, -toe_roll, "b", "right")
+    ltoeA = kin.qm_toe(toe_pitch, toe_roll, "a", "left")
+    ltoeB = kin.qm_toe(toe_pitch, toe_roll, "b", "left")
+    q_motors_des[di.RightToeA] = rtoeA
+    q_motors_des[di.RightToeB] = rtoeB
+    q_motors_des[di.LeftToeA] = ltoeA
+    q_motors_des[di.LeftToeB] = ltoeB
 
     τ = zeros(di.NUM_MOTORS) 
     q_motors_error = q_motors - q_motors_des    
@@ -158,6 +151,14 @@ end
 function fabric_controller!(digit::Digit)
     q, qdot, qmotors = get_generalized_coordinates(digit) 
     qdes, qdotdes, torqdes = fabric_compute(q, qdot, qmotors, digit.problem)
+    τ = compute_motor_torques(q, qdot, qdes, qdotdes, qmotors, digit.problem)         
+    apply_motor_torques!(τ, digit)
+    apply_obstacle_force!(digit)
+end
+
+function qp_controller!(digit::Digit)
+    q, qdot, qmotors = get_generalized_coordinates(digit) 
+    qdes, qdotdes, torqdes = qp_compute(q, qdot, qmotors, digit.problem)
     τ = compute_motor_torques(q, qdot, qdes, qdotdes, qmotors, digit.problem)         
     apply_motor_torques!(τ, digit)
     apply_obstacle_force!(digit)
