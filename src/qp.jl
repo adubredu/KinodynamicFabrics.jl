@@ -17,6 +17,8 @@ function dodge_qp_task_map(θ, θ̇ , prob::FabricProblem)
 end
 
 function build_jacobian(task, θ, θ̇, S, prob)
+    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
+    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
     ψ = eval(Symbol(task, :_task_map))
     J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ)
     J = J*S
@@ -24,6 +26,8 @@ function build_jacobian(task, θ, θ̇, S, prob)
 end
 
 function get_task_space_coordinate(task, θ, θ̇, prob)
+    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
+    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
     ψ = eval(Symbol(task, :_task_map))
     x = ψ(θ, θ̇, prob)
     return x
@@ -67,10 +71,42 @@ function build_repellers(θ, θ̇, prob; K=5)
     return Js, vs, ws
 end
 
+function compute_velocity_limits(θ, prob, Δt::Float64; K=0.5)
+    q_min, q_max = prob.digit.θ_min, prob.digit.θ_max
+    q̇_min = K*(q_min - θ)
+    q̇_max = K*(q_max - θ)
+    return q̇_min, q̇_max
+end
+
+function compute_zmp(θ, θ̇ , prob::FabricProblem)
+    params = prob.task_data[:zmp]
+    Kfilter = params[:filter]
+    vprev = params[:prev_com_vel]
+    g = params[:g]
+    p_com = kin.p_COM(θ)
+    v_com = kin.v_COM(θ, θ̇ )
+    h = p_com[3]
+    a_com = ((v_com[1:2] - vprev)/(5e-4)) 
+    a_com = (1-0.01)*params[:prev_a] + 0.01*a_com
+    pz = p_com[1:2] - (h/g)*a_com
+    params[:prev_com_vel] = v_com[1:2]
+    params[:prev_a] = a_com
+    return pz
+end
+
+function compute_zmp_limits(θ, θ̇, prob)
+    maxlim = 0.1; minlim = -0.1; K=0.5
+    pz = compute_zmp(θ, θ̇ , prob)
+    xmin = K*(minlim - pz[1])
+    xmax = K*(maxlim - pz[1])
+    J = FiniteDiff.finite_difference_jacobian(σ->compute_zmp(σ, θ̇ , prob), θ)
+    w = prob.W[:zmp_upper]
+    return J, xmin, xmax, w
+end
+
 function qp_compute(θ, θ̇, qmotors, prob)
     model = prob.task_data[:qp][:model]
-    # tasks = prob.tasks 
-    # qlims = prob.qlims 
+    
 
     Δt = prob.digit.Δt
     q̇ = model.obj_dict[:q̇]
@@ -81,17 +117,17 @@ function qp_compute(θ, θ̇, qmotors, prob)
         vs = [vs; vds]
         ws = [ws; wds]
     end
-    # q̇_min, q̇_max = compute_velocity_limits(θ, qlims, Δt)   
+    q̇_min, q̇_max = compute_velocity_limits(θ, prob, Δt)   
 
     @objective(model, Min, 
             sum([w*(J*q̇ - v)'*(J*q̇ - v) for (J, v, w) in zip(Js, vs, ws)]))
 
     # model.ext[:q_lims]   = @constraint(model, q̇_min .≤ q̇ .≤ q̇_max)
-    # if :com_limit in keys(prob.task_dict) 
-    #     Jcom, ẏ_min, ẏ_max, w = compute_com_limits(θ, prob)    
-    #     try delete(model, model.ext[:com_lims])  catch nothing; end 
-    #     model.ext[:com_lims] = @constraint(model, ẏ_min .≤ (Jcom*q̇)[1] .≤ ẏ_max)
-    # end
+    if :zmp_upper in prob.ψ[:level1]
+        Jcom, ẏ_min, ẏ_max, w = compute_zmp_limits(θ, θ̇, prob)    
+        try delete(model, model.ext[:zmp_limits])  catch nothing; end  
+        model.ext[:zmp_limits] = @constraint(model, ẏ_min .≤ (Jcom*q̇)[1] .≤ ẏ_max)
+    end
     optimize!(model)
     Δq = value.(q̇)
     q̇sol = Δq/Δt
@@ -107,6 +143,10 @@ function qp_compute(θ, θ̇, qmotors, prob)
 
     qdot_out[prob.digit.arm_joint_indices] = θ̇d[prob.digit.arm_joint_indices]
     qdot_out[prob.digit.leg_joint_indices] = θ̇d[prob.digit.leg_joint_indices] 
+
+    toe_indices = [di.qleftToePitch, di.qleftToeRoll, di.qrightToePitch, di.qrightToeRoll]
+    q_out[toe_indices] = θd[toe_indices]
+    qdot_out[toe_indices] = θ̇d[toe_indices] 
 
     q_out = clamp.(q_out, prob.digit.θ_min, prob.digit.θ_max)  
     qdot_out = clamp.(qdot_out, prob.digit.θ̇_min, prob.digit.θ̇_max) 

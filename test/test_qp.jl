@@ -27,8 +27,8 @@ xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:lower_body_posture] = [0.31, 0.2, 0.19, -0.31, -0.2, -0.19]
 xᵨs[:zmp] = [0.0, 0.0]
-xᵨs[:left_hand_target] = [0.4, 0.4, 0.4]
-xᵨs[:right_hand_target] = [0.4, -0.4, 0.4]
+xᵨs[:left_hand_target] = [0.2, 0.3, 0.8]
+xᵨs[:right_hand_target] = [0.2, -0.3, 0.8]
 
 ## task maps
 ψs = Dict() 
@@ -42,7 +42,8 @@ xᵨs[:right_hand_target] = [0.4, -0.4, 0.4]
                 :dodge,
                 :zmp_upper,
                 :zmp_lower,
-                :right_hand_target
+                :right_hand_target,
+                :left_hand_target
                ] 
 
 
@@ -51,6 +52,8 @@ Ws = Dict()
 Ws[:upper_body_posture] = 1e0
 Ws[:lower_body_posture] = 1e0
 Ws[:com_target] = 1e0
+Ws[:right_hand_target] = 1e-2
+Ws[:left_hand_target] = 1e-2
 Ws[:dodge] = 0.3e1
 Ws[:zmp_upper] = 1e0
 Ws[:zmp_lower] = 1e0
@@ -72,6 +75,10 @@ S_leg = diagm(s_leg)
 s_arm = zeros(N)
 s_arm[digit.arm_joint_indices] .= 1.0
 S_arm = diagm(s_arm)
+
+s_whole = zeros(N)
+s_whole[[digit.arm_joint_indices; digit.leg_joint_indices]] .= 1.0
+S_whole = diagm(s_whole)
 
 Ss = Dict() 
 Ss[:upper_body_posture] = S_arm 
@@ -120,11 +127,11 @@ model = initialize_solver(N)
 problem.task_data[:qp][:model] = model
 
 digit.problem = problem
-digit.obstacle_force = -0.5
+digit.obstacle_force = -0.0
 step(digit)
 
 #Horizon
-T = 10 # seconds
+T = 5 # seconds
 Horizon = T/digit.Δt # timesteps
 
 for i = 1:Horizon
