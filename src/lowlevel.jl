@@ -48,8 +48,8 @@ function compute_motor_torques(q, qdot, qdes, qdotdes, q_motors, problem)
     p_com_aligned =  Rz' * p_com_world
     v_com_aligned =  Rz' * v_com_world  
 
-    pz = compute_zmp(q, qdot, problem)
-    pz_aligned = Rz' * [pz; 0]
+    # pz = compute_zmp(q, qdot, problem)
+    # pz_aligned = Rz' * [pz; 0]
 
     # Main Fabric
     q_motors_des = copy(q_motors)

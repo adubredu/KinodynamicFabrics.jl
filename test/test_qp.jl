@@ -35,8 +35,8 @@ xᵨs[:zmp] = [0.0, 0.0]
 ψs[:level2] = [] 
 ψs[:level1] = [
                 :upper_body_posture,
-                # :lower_body_posture,
-                :com_target,
+                :lower_body_posture,
+                # :com_target,
                 :dodge,
                 :zmp_upper,
                 :zmp_lower
@@ -102,11 +102,17 @@ data[:diagnostics] = Dict(
                 :norm=> []
 )
 
+data[:qp] = Dict(
+)
+
 Js = nothing
 Obstacles = nothing
 
 problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
 zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
+
+model = initialize_solver(N)
+problem.task_data[:qp][:model] = model
 
 digit.problem = problem
 digit.obstacle_force = -0.0
@@ -120,7 +126,7 @@ for i = 1:Horizon
     qp_controller!(digit)
     step(digit)
     render_sim(digit, visualize) 
-    # @show i
+    @show i
 end
 
 if visualize digit.viewer.close() end

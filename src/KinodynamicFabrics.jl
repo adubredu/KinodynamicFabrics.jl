@@ -9,6 +9,7 @@ using DigitInterface
 using CSV
 using MuJoCo
 using MuJoCo.PythonCall
+using JuMP, OSQP
 
 include("types.jl")
 include("utils.jl")
@@ -16,6 +17,7 @@ include("utils.jl")
 include("kinematics/kinematics.jl")
 include("dynamics/dynamics.jl")
 include("kinofabrics.jl")
+include("qp.jl")
 include("lowlevel.jl")
 
 include("set.jl")
@@ -45,7 +47,9 @@ export Digit,
 # fabrics
 export fabric_compute 
 
-export qp_compute
+# quadratic program
+export qp_compute,
+        initialize_solver
 
 # lowlevel
 export  fabric_controller!,
