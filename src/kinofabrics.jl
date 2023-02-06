@@ -178,28 +178,8 @@ function compute_alip_foot_placement(params)
     # p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*(Ly_eos_est + mass*vz*xc))/(mass*(zH*lip_constant*sinh(lip_constant*Ts)-vz)*cosh(lip_constant*Ts))
     # p_com_wrt_sw_eos_y = -(Lx_des - cosh(lip_constant*Ts)*(Lx_eos_est - mass*vz*yc))/(mass*(zH*lip_constant*sinh(lip_constant*Ts)-vz)*cosh(lip_constant*Ts))
 
-
     p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*Ly_eos_est - mass*cosh(lip_constant*Ts) * xc*vz)  /  (mass*zH*lip_constant*sinh(lip_constant*Ts) - mass * cosh(lip_constant*Ts) * vz)
     p_com_wrt_sw_eos_y = (Lx_des - cosh(lip_constant*Ts)*Lx_eos_est + mass*cosh(lip_constant*Ts) * yc*vz)  /  (mass*-zH*lip_constant*sinh(lip_constant*Ts) + mass * cosh(lip_constant*Ts) * vz)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     p_sw_wrt_st_eos_x = xc_eos_est - p_com_wrt_sw_eos_x
     p_sw_wrt_st_eos_y = yc_eos_est - p_com_wrt_sw_eos_y
@@ -888,9 +868,7 @@ function com_target_task_map(θ, θ̇ , prob::FabricProblem)
     return res
 end
 
-function dodge_task_map(θ, θ̇ , prob::FabricProblem)
-    # S = prob.S[:com_target]
-    # θ = S*θ 
+function dodge_task_map(θ, θ̇ , prob::FabricProblem) 
     θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
     θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
     com_pos =  kin.p_com_wrt_feet(θ)
@@ -898,10 +876,57 @@ function dodge_task_map(θ, θ̇ , prob::FabricProblem)
     com = [(Rz * com_pos[1:3])..., (Rz * com_pos[4:6])...]
     com[[3, 6]] .+= 0.37
     pose = [0.1+sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
+    R = RotZYX([θ[di.qbase_yaw], θ[di.qbase_pitch], θ[di.qbase_roll]]...)
+    pose = R*pose
     obs_pose = prob.task_data[:obstacle][:position]
     radius = prob.task_data[:obstacle][:radius]
     Δ = [(norm(pose-obs_pose)/radius) - 1]
     return Δ
+
+    # θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
+    # θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
+    # com =  kin.p_base_wrt_feet(θ) 
+    # com[[3, 6]] .+= 0.5
+    # pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
+    # R = RotZYX([θ[di.qbase_yaw], θ[di.qbase_pitch], θ[di.qbase_roll]]...)
+    # pose = R*pose
+    # obs_pose = prob.task_data[:obstacle][:position]
+    # radius = prob.task_data[:obstacle][:radius]
+    # Δ = [(norm(pose-obs_pose)/radius) - 1]
+    # return Δ
+end
+
+
+function zmp_upper_task_map(θ, θ̇ , prob::FabricProblem) 
+    params = prob.task_data[:zmp]
+    Kfilter = params[:filter]
+    vprev = params[:prev_com_vel]
+    g = params[:g]
+    p_com = kin.p_COM(θ)
+    v_com = kin.v_COM(θ, θ̇ )
+    h = p_com[3]
+    a_com = ((v_com[1:2] - vprev)/(5e-4)) 
+    a_com = (1-0.01)*params[:prev_a] + 0.01*a_com
+    pz = p_com[1:2] - (h/g)*a_com
+    params[:prev_com_vel] = v_com[1:2]
+    params[:prev_a] = a_com
+    return [0.1 - pz[1]]
+end
+
+function zmp_lower_task_map(θ, θ̇ , prob::FabricProblem) 
+    params = prob.task_data[:zmp]
+    Kfilter = params[:filter]
+    vprev = params[:prev_com_vel]
+    g = params[:g]
+    p_com = kin.p_COM(θ)
+    v_com = kin.v_COM(θ, θ̇ )
+    h = p_com[3]
+    a_com = ((v_com[1:2] - vprev)/(5e-4)) 
+    a_com = (1-0.01)*params[:prev_a] + 0.01*a_com
+    pz = p_com[1:2] - (h/g)*a_com
+    params[:prev_com_vel] = v_com[1:2]
+    params[:prev_a] = a_com
+    return [pz[1] - -0.1]
 end
 
 
@@ -952,7 +977,7 @@ function com_target_fabric(x, ẋ, prob::FabricProblem)
     Δx = x - prob.xᵨ[:com_target][1:6]
     ψ(θ) = 0.5*θ'*k*θ
     δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*δx -β*ẋ 
+    ẍ = -k*δx - β*ẋ 
     M = λ * I(N)
     return (M, ẍ)
 end
@@ -965,8 +990,48 @@ function dodge_fabric(x, ẋ, prob::FabricProblem)
     ϕ(σ) = (K/2) .* s .* (max_range .- σ)./(max_range .* σ).^2
     δₓ = FiniteDiff.finite_difference_jacobian(ϕ, x) 
     ẍ=-K*diag(δₓ)  
-    M = norm(ẍ)*I(length(x))
-    @show x, ẍ
+    M = norm(ẍ)*I(length(x)) 
+    return (M, ẍ)
+end
+
+function zmp_fabric(x, ẋ, prob::FabricProblem)
+    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25 
+    N = length(x)
+    W = prob.W[:zmp]
+    k = W*k  
+    Δx = x - prob.xᵨ[:zmp]
+    ψ(θ) = 0.5*θ'*k*θ
+    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
+    ẍ = -k*δx - β*ẋ 
+    M = λ * I(N)
+    return (M, ẍ)
+end
+
+function zmp_upper_fabric(x, ẋ, prob::FabricProblem)
+    λ = 0.25
+    α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
+    s = zero(ẋ)
+    K = prob.W[:zmp_upper]
+    for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
+    M = diagm(s.*(λ./x))
+    ψ(θ) = (K/2) .* s .* (1 ./ θ)
+    δx = FiniteDiff.finite_difference_jacobian(ψ, x) 
+    ẍ = -K*δx
+    ẍ = vec(ẍ) 
+    return (M, ẍ)
+end
+
+function zmp_lower_fabric(x, ẋ, prob::FabricProblem)
+    λ = 0.25
+    α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
+    s = zero(ẋ)
+    K = prob.W[:zmp_lower]
+    for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
+    M = diagm(s.*(λ./x))
+    ψ(θ) = (K/2) .* s .* (1 ./ θ)
+    δx = FiniteDiff.finite_difference_jacobian(ψ, x) 
+    ẍ = -K*δx
+    ẍ = vec(ẍ) 
     return (M, ẍ)
 end
 

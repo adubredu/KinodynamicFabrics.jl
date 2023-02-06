@@ -57,6 +57,7 @@ import Base: step
 function step(digit::Digit)
     mujoco.mj_step(digit.model, digit.data) 
     update_obstacle_position!(digit)
+    digit.problem.t = pyconvert(Float64, digit.data.time)
 end
 
 function render_sim(digit, visualize; fps=50)

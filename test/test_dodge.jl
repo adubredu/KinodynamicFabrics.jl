@@ -26,6 +26,7 @@ xᵨs[:close_arms_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5]
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:lower_body_posture] = [0.31, 0.2, 0.19, -0.31, -0.2, -0.19]
+xᵨs[:zmp] = [0.0, 0.0]
 
 ## task maps
 ψs = Dict() 
@@ -36,7 +37,9 @@ xᵨs[:lower_body_posture] = [0.31, 0.2, 0.19, -0.31, -0.2, -0.19]
                 :upper_body_posture,
                 # :lower_body_posture,
                 :com_target,
-                :dodge
+                :dodge,
+                :zmp_upper,
+                :zmp_lower
                ] 
 
 
@@ -46,6 +49,8 @@ Ws[:upper_body_posture] = 1e0
 Ws[:lower_body_posture] = 1e0
 Ws[:com_target] = 1e0
 Ws[:dodge] = 0.3e1
+Ws[:zmp_upper] = 1e0
+Ws[:zmp_lower] = 1e0
 
 ## Priorities
 Pr = Dict()
@@ -69,13 +74,32 @@ Ss = Dict()
 Ss[:upper_body_posture] = S_arm 
 Ss[:lower_body_posture] = S_leg
 Ss[:com_target] = S_leg  
-Ss[:dodge] = S_leg  
+Ss[:dodge] = S_leg 
+Ss[:zmp_upper] = S_leg 
+Ss[:zmp_lower] = S_leg 
+
 
 data = Dict()
 data[:obstacle] = Dict(
                 :radius=>0.15,
                 :position=>zeros(3),
                 :max_range=>15.0
+)
+
+data[:zmp] = Dict(
+                :prev_time=>0.0,
+                :prev_com_vel=>[0.0, 0.0],
+                :g=>9.806, 
+                :prev_zmp=>[0.0, 0.0],
+                :prev_a=>[0.0, 0.0],
+                :filter=>0.01
+)
+
+data[:diagnostics] = Dict(
+                :p_com =>[],
+                :p_zmp => [],
+                :t => [],
+                :norm=> []
 )
 
 Js = nothing
@@ -85,11 +109,11 @@ problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
 zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
 
 digit.problem = problem
-digit.obstacle_force = -0.5
+digit.obstacle_force = -0.05
 step(digit)
 
 #Horizon
-T = 10 # seconds
+T = 5 # seconds
 Horizon = T/digit.Δt # timesteps
 
 for i = 1:Horizon
