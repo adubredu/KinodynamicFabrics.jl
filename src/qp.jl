@@ -5,6 +5,17 @@ function initialize_solver(N; Δt=1e-3)
     return model
 end
 
+function dodge_qp_task_map(θ, θ̇ , prob::FabricProblem)  
+    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
+    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
+    com =  kin.p_base_wrt_feet(θ) 
+    com[[3, 6]] .+= 0.5
+    pose = [0.15+sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
+    R = RotZYX([θ[di.qbase_yaw], θ[di.qbase_pitch], θ[di.qbase_roll]]...)
+    pose = R*pose 
+    return pose
+end
+
 function build_jacobian(task, θ, θ̇, S, prob)
     ψ = eval(Symbol(task, :_task_map))
     J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ)
@@ -18,7 +29,7 @@ function get_task_space_coordinate(task, θ, θ̇, prob)
     return x
 end
 
-function build_attractors(θ, θ̇, prob; K=10.0) 
+function build_attractors(θ, θ̇, prob; K=5.5) 
     Js = []
     vs = []
     ws = [] 
@@ -36,6 +47,26 @@ function build_attractors(θ, θ̇, prob; K=10.0)
     return Js, vs, ws
 end
 
+function build_repellers(θ, θ̇, prob; K=5) 
+    Js = []
+    vs = []
+    ws = []  
+    task = :dodge_qp
+    ψ = eval(Symbol(task, :_task_map))
+    x = ψ(θ, zero(θ), prob)
+    o = get_closest_point(x, prob)  
+    # @show o
+    e = (o - x)
+    S = prob.S[:dodge]
+    J = build_jacobian(task, θ, θ̇, S, prob)
+    if norm(e) < prob.task_data[:obstacle][:max_range] && o[1]>-0.3
+        push!(vs, -K*e)
+        push!(Js, J)
+        push!(ws, prob.W[:dodge])
+    end 
+    return Js, vs, ws
+end
+
 function qp_compute(θ, θ̇, qmotors, prob)
     model = prob.task_data[:qp][:model]
     # tasks = prob.tasks 
@@ -44,6 +75,12 @@ function qp_compute(θ, θ̇, qmotors, prob)
     Δt = prob.digit.Δt
     q̇ = model.obj_dict[:q̇]
     Js, vs, ws = build_attractors(θ, θ̇, prob) 
+    if :dodge in prob.ψ[:level1]
+        Jds, vds, wds = build_repellers(θ, θ̇, prob)
+        Js = [Js; Jds]
+        vs = [vs; vds]
+        ws = [ws; wds]
+    end
     # q̇_min, q̇_max = compute_velocity_limits(θ, qlims, Δt)   
 
     @objective(model, Min, 

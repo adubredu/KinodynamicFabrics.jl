@@ -4,7 +4,7 @@
             reflectance="0.8" shininess="0.9"/>
     </asset>
     <worldbody> 
-        <body name="obstacle" pos='2 0 1.6' euler="0 0 0">
+        <body name="obstacle" pos='1 0 1.6' euler="0 0 0">
         <joint name="obstacle" type="slide" limited="true" pos="2 0 1.2" axis='1 0 0' range='-4 2'/> 
         <geom type="sphere" name="green_sphere" pos="0 0 0" size="0.15"  material="spherebody" class="collision"/>  
         </body>

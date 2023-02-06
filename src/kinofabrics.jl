@@ -929,6 +929,22 @@ function zmp_lower_task_map(θ, θ̇ , prob::FabricProblem)
     return [pz[1] - -0.1]
 end
 
+function left_hand_target_task_map(θ, θ̇ , prob::FabricProblem)  
+    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
+    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
+    pos =  kin.p_left_hand_wrt_feet_center(θ) 
+    res = pos 
+    return res
+end
+
+function right_hand_target_task_map(θ, θ̇ , prob::FabricProblem) 
+    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
+    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
+    pos =  kin.p_right_hand_wrt_feet_center(θ) 
+    res = pos 
+    return res
+end
+
 
 ## Fabric Components
 function walk_attractor_fabric(x, ẋ, problem)
@@ -982,11 +998,39 @@ function com_target_fabric(x, ẋ, prob::FabricProblem)
     return (M, ẍ)
 end
 
+function left_hand_target_fabric(x, ẋ, prob::FabricProblem)
+    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25 
+    N = length(x)
+    W = prob.W[:left_hand_target]
+    k = W*k  
+    Δx = x - prob.xᵨ[:left_hand_target] 
+    ψ(θ) = 0.5*θ'*k*θ
+    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
+    ẍ = -k*δx - β*ẋ 
+    M = λ * I(N)
+    return (M, ẍ)
+end
+
+function right_hand_target_fabric(x, ẋ, prob::FabricProblem)
+    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25 
+    N = length(x)
+    W = prob.W[:right_hand_target]
+    k = W*k  
+    Δx = x - prob.xᵨ[:right_hand_target] 
+    ψ(θ) = 0.5*θ'*k*θ
+    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
+    ẍ = -k*δx - β*ẋ 
+    M = λ * I(N)
+    return (M, ẍ)
+end
+
 function dodge_fabric(x, ẋ, prob::FabricProblem)
     W = prob.W[:dodge]; k=1.0
     K = W*k
     max_range = prob.task_data[:obstacle][:max_range]
     s = [v > max_range ? 0.0 : 1.0 for v in x]
+    obs_pose = prob.task_data[:obstacle][:position]
+    if obs_pose[1] < -0.2 s = zero(s) end
     ϕ(σ) = (K/2) .* s .* (max_range .- σ)./(max_range .* σ).^2
     δₓ = FiniteDiff.finite_difference_jacobian(ϕ, x) 
     ẍ=-K*diag(δₓ)  

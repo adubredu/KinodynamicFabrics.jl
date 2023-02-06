@@ -48,5 +48,7 @@ include("J_vc_walk_RS.jl")
 include("L_world_about_point.jl")
 include("elbow_point_left.jl")
 include("elbow_point_right.jl")
+include("p_right_hand_wrt_feet_center.jl")
+include("p_left_hand_wrt_feet_center.jl")
 
 end

@@ -27,6 +27,8 @@ xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:lower_body_posture] = [0.31, 0.2, 0.19, -0.31, -0.2, -0.19]
 xᵨs[:zmp] = [0.0, 0.0]
+xᵨs[:left_hand_target] = [0.2, 0.3, 0.8]
+xᵨs[:right_hand_target] = [0.5, -0.5, 1.2]
 
 ## task maps
 ψs = Dict() 
@@ -34,12 +36,14 @@ xᵨs[:zmp] = [0.0, 0.0]
 ψs[:level3] = [] 
 ψs[:level2] = [] 
 ψs[:level1] = [
-                :upper_body_posture,
+                # :upper_body_posture,
                 :lower_body_posture,
                 # :com_target,
                 :dodge,
                 :zmp_upper,
-                :zmp_lower
+                :zmp_lower,
+                :right_hand_target,
+                :left_hand_target
                ] 
 
 
@@ -48,6 +52,8 @@ Ws = Dict()
 Ws[:upper_body_posture] = 1e0
 Ws[:lower_body_posture] = 0.7e0
 Ws[:com_target] = 1e0
+Ws[:left_hand_target] = 1e0
+Ws[:right_hand_target] = 1e0
 Ws[:dodge] = 1e1
 Ws[:zmp_upper] = 1e-1
 Ws[:zmp_lower] = 1e-1
@@ -70,6 +76,10 @@ s_arm = zeros(N)
 s_arm[digit.arm_joint_indices] .= 1.0
 S_arm = diagm(s_arm)
 
+s_whole = zeros(N)
+s_whole[[digit.arm_joint_indices; digit.leg_joint_indices]] .= 1.0
+S_whole = diagm(s_whole)
+
 s_toes = zeros(N)
 s_toes[[di.qleftToePitch, di.qleftToeRoll, di.qrightToePitch, di.qrightToeRoll]] .= 1.0
 S_toes = diagm(s_toes)
@@ -77,7 +87,9 @@ S_toes = diagm(s_toes)
 Ss = Dict() 
 Ss[:upper_body_posture] = S_arm 
 Ss[:lower_body_posture] = S_leg
-Ss[:com_target] = S_leg  
+Ss[:com_target] = S_leg 
+Ss[:left_hand_target] = S_arm  
+Ss[:right_hand_target] = S_whole  
 Ss[:dodge] = S_leg 
 Ss[:zmp_upper] = S_toes 
 Ss[:zmp_lower] = S_toes 
@@ -113,7 +125,7 @@ problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
 zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
 
 digit.problem = problem
-digit.obstacle_force = -0.6
+digit.obstacle_force = -0.1
 step(digit)
 
 #Horizon

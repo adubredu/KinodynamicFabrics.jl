@@ -27,6 +27,8 @@ xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:lower_body_posture] = [0.31, 0.2, 0.19, -0.31, -0.2, -0.19]
 xᵨs[:zmp] = [0.0, 0.0]
+xᵨs[:left_hand_target] = [0.4, 0.4, 0.4]
+xᵨs[:right_hand_target] = [0.4, -0.4, 0.4]
 
 ## task maps
 ψs = Dict() 
@@ -39,7 +41,8 @@ xᵨs[:zmp] = [0.0, 0.0]
                 # :com_target,
                 :dodge,
                 :zmp_upper,
-                :zmp_lower
+                :zmp_lower,
+                :right_hand_target
                ] 
 
 
@@ -74,6 +77,8 @@ Ss = Dict()
 Ss[:upper_body_posture] = S_arm 
 Ss[:lower_body_posture] = S_leg
 Ss[:com_target] = S_leg  
+Ss[:left_hand_target] = S_arm  
+Ss[:right_hand_target] = S_arm  
 Ss[:dodge] = S_leg 
 Ss[:zmp_upper] = S_leg 
 Ss[:zmp_lower] = S_leg 
@@ -83,7 +88,7 @@ data = Dict()
 data[:obstacle] = Dict(
                 :radius=>0.15,
                 :position=>zeros(3),
-                :max_range=>15.0
+                :max_range=>0.5
 )
 
 data[:zmp] = Dict(
@@ -115,18 +120,18 @@ model = initialize_solver(N)
 problem.task_data[:qp][:model] = model
 
 digit.problem = problem
-digit.obstacle_force = -0.0
+digit.obstacle_force = -0.5
 step(digit)
 
 #Horizon
-T = 5 # seconds
+T = 10 # seconds
 Horizon = T/digit.Δt # timesteps
 
 for i = 1:Horizon
     qp_controller!(digit)
     step(digit)
     render_sim(digit, visualize) 
-    @show i
+    # @show i
 end
 
 if visualize digit.viewer.close() end

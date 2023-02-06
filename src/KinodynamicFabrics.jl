@@ -39,7 +39,8 @@ export jvp,
        wrap_to_pi!,
        wrap_to_pi,
        wrap_angle,
-       behavior_switcher
+       behavior_switcher,
+       get_closest_point
 
 export Digit,
         Indices

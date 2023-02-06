@@ -26,7 +26,7 @@ function get_closest_point(x, prob)
     c = prob.task_data[:obstacle][:position]
     r = prob.task_data[:obstacle][:radius]
     cp = c + r/(norm(x-c))*(x-c)
-    return
+    return cp
 end
 
 #= 
