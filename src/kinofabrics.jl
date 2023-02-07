@@ -929,6 +929,14 @@ function zmp_lower_task_map(θ, θ̇ , prob::FabricProblem)
     return [pz[1] - -0.1]
 end
 
+function joint_lower_limit_task_map(θ, θ̇ , prob::FabricProblem)
+    return θ[prob.digit.arm_joint_indices]-prob.digit.θ_min[prob.digit.arm_joint_indices]
+end
+
+function joint_upper_limit_task_map(θ, θ̇ , prob::FabricProblem)
+    return prob.digit.θ_max[prob.digit.arm_joint_indices] - θ[prob.digit.arm_joint_indices]
+end
+
 function left_hand_target_task_map(θ, θ̇ , prob::FabricProblem)  
     θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
     θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
@@ -1079,6 +1087,34 @@ function zmp_lower_fabric(x, ẋ, prob::FabricProblem)
     return (M, ẍ)
 end
 
+function joint_lower_limit_fabric(x, ẋ, prob::FabricProblem)
+    λ = 0.25
+    α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
+    s = zero(ẋ)
+    K = prob.W[:joint_lower_limit]
+    for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
+    M = diagm(s.*(λ./x))
+    ψ(θ) = (K/2) .* s .* (1 ./ θ)
+    δx = FiniteDiff.finite_difference_jacobian(ψ, x) 
+    ẍ = -K*δx
+    ẍ = diag(ẍ)  
+    return (M, ẍ) 
+end
+
+function joint_upper_limit_fabric(x, ẋ, prob::FabricProblem)
+    λ = 0.25
+    α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
+    s = zero(ẋ)
+    K = prob.W[:joint_upper_limit]
+    for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
+    M = diagm(s.*(λ./x))
+    ψ(θ) = (K/2) .* s .* (1 ./ θ)
+    δx = FiniteDiff.finite_difference_jacobian(ψ, x) 
+    ẍ = -K*δx
+    ẍ = diag(ẍ) 
+    return (M, ẍ)
+end
+
 
 ## Solve
 function fabric_eval(x, ẋ, name::Symbol, prob::FabricProblem)
@@ -1090,20 +1126,20 @@ function fabric_eval(x, ẋ, name::Symbol, prob::FabricProblem)
 end
 
 function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
-    xₛ = []; ẋₛ = []; cₛ = []; qvel = zero(θ)
+    xₛ = []; ẋₛ = []; cₛ = []; 
     Mₛ = []; ẍₛ = []; Jₛ =  [] 
-    for t in prob.ψ[:level4]
-        ψ = eval(Symbol(t, :_task_map))
-        ψ(θ, θ̇ , qmotors,  prob)
-    end
-    for t in prob.ψ[:level3]
-        ψ = eval(Symbol(t, :_task_map))
-        ψ(θ, θ̇ , qmotors,  prob)
-    end
-    for t in prob.ψ[:level2]
-        ψ = eval(Symbol(t, :_task_map))
-        ψ(θ, θ̇ , qmotors,  prob)
-    end 
+    # for t in prob.ψ[:level4]
+    #     ψ = eval(Symbol(t, :_task_map))
+    #     ψ(θ, θ̇ , qmotors,  prob)
+    # end
+    # for t in prob.ψ[:level3]
+    #     ψ = eval(Symbol(t, :_task_map))
+    #     ψ(θ, θ̇ , qmotors,  prob)
+    # end
+    # for t in prob.ψ[:level2]
+    #     ψ = eval(Symbol(t, :_task_map))
+    #     ψ(θ, θ̇ , qmotors,  prob)
+    # end 
     for t in prob.ψ[:level1]
         ψ = eval(Symbol(t, :_task_map))
         S = prob.S[t]  
@@ -1128,10 +1164,10 @@ function fabric_compute(q, qdot, qmotors,  problem)
     θ̇d = θ̈d
     θd = q + θ̇d*problem.Δt
 
-    toe_indices = [di.qleftToePitch, di.qleftToeRoll, di.qrightToePitch, di.qrightToeRoll]
-
     q_out = copy(q)
     qdot_out = copy(qdot)
+
+    toe_indices = [di.qleftToePitch, di.qleftToeRoll, di.qrightToePitch, di.qrightToeRoll]
 
     q_out[problem.digit.leg_joint_indices] = θd[problem.digit.leg_joint_indices]
     q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices]

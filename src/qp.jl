@@ -94,39 +94,50 @@ function compute_zmp(θ, θ̇ , prob::FabricProblem)
     return pz
 end
 
-function compute_zmp_limits(θ, θ̇, prob)
-    maxlim = 0.1; minlim = -0.1; K=0.5
-    pz = compute_zmp(θ, θ̇ , prob)
-    xmin = K*(minlim - pz[1])
+function compute_zmp_upper_limit(θ, θ̇, prob)
+    maxlim = 0.1;  K=0.5
+    pz = compute_zmp(θ, θ̇ , prob) 
     xmax = K*(maxlim - pz[1])
     J = FiniteDiff.finite_difference_jacobian(σ->compute_zmp(σ, θ̇ , prob), θ)
     w = prob.W[:zmp_upper]
-    return J, xmin, xmax, w
+    return J, xmax, w
+end
+
+function compute_zmp_lower_limit(θ, θ̇, prob)
+    minlim = -0.1; K=0.5
+    pz = compute_zmp(θ, θ̇ , prob)
+    xmin = K*(minlim - pz[1]) 
+    J = FiniteDiff.finite_difference_jacobian(σ->compute_zmp(σ, θ̇ , prob), θ)
+    w = prob.W[:zmp_lower]
+    return J, xmin, w
 end
 
 function qp_compute(θ, θ̇, qmotors, prob)
     model = prob.task_data[:qp][:model]
-    
+    digit = prob.digit
 
     Δt = prob.digit.Δt
     q̇ = model.obj_dict[:q̇]
-    Js, vs, ws = build_attractors(θ, θ̇, prob) 
+    Js, vs, ws = build_attractors(copy(θ), copy(θ̇ ), prob) 
     if :dodge in prob.ψ[:level1]
-        Jds, vds, wds = build_repellers(θ, θ̇, prob)
+        Jds, vds, wds = build_repellers(copy(θ), copy(θ̇ ), prob)
         Js = [Js; Jds]
         vs = [vs; vds]
         ws = [ws; wds]
     end
-    q̇_min, q̇_max = compute_velocity_limits(θ, prob, Δt)   
+    # q̇_min, q̇_max = compute_velocity_limits(θ, prob, Δt)   
 
     @objective(model, Min, 
             sum([w*(J*q̇ - v)'*(J*q̇ - v) for (J, v, w) in zip(Js, vs, ws)]))
 
-    # model.ext[:q_lims]   = @constraint(model, q̇_min .≤ q̇ .≤ q̇_max)
-    if :zmp_upper in prob.ψ[:level1]
-        Jcom, ẏ_min, ẏ_max, w = compute_zmp_limits(θ, θ̇, prob)    
-        try delete(model, model.ext[:zmp_limits])  catch nothing; end  
-        model.ext[:zmp_limits] = @constraint(model, ẏ_min .≤ (Jcom*q̇)[1] .≤ ẏ_max)
+    # model.ext[:q_lims]   = @constraint(model, q̇_min[digit.arm_joint_indices] .≤ q̇[digit.arm_joint_indices] .≤ q̇_max[digit.arm_joint_indices])
+    if :zmp_upper in prob.ψ[:level1] && :zmp_lower in prob.ψ[:level1]
+        Jcom_upper,  ẏ_max, _ = compute_zmp_upper_limit(θ, θ̇, prob) 
+        Jcom_lower, ẏ_min,  _ = compute_zmp_lower_limit(θ, θ̇, prob)    
+        try delete(model, model.ext[:zmp_upper_limit])  catch nothing; end 
+        try delete(model, model.ext[:zmp_lower_limit])  catch nothing; end  
+        model.ext[:zmp_upper_limit] = @constraint(model, (Jcom_upper*q̇)[1] .≤ ẏ_max)
+        model.ext[:zmp_lower_limit] = @constraint(model, ẏ_min .≤ (Jcom_lower*q̇)[1])
     end
     optimize!(model)
     Δq = value.(q̇)

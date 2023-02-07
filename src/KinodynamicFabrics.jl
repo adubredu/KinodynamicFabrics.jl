@@ -40,7 +40,8 @@ export jvp,
        wrap_to_pi,
        wrap_angle,
        behavior_switcher,
-       get_closest_point
+       get_closest_point,
+       get_closest_dist_to_obstacle
 
 export Digit,
         Indices

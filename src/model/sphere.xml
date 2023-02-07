@@ -1,6 +1,6 @@
 <mujoco model="sphere">  
     <asset>
-        <material name="spherebody"  texuniform="true" rgba="0.3 0.3 0.3 1"
+        <material name="spherebody"  texuniform="true" rgba="0 1 0 1"
             reflectance="0.8" shininess="0.9"/>
     </asset>
     <worldbody> 

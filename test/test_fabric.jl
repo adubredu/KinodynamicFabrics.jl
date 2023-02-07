@@ -27,8 +27,11 @@ xᵨs[:clutch_arms_posture] = [0.0, 0.463, 0.253, -0.5, 0.0, -0.463, -0.253, 0.5
 xᵨs[:normal_posture] = [0.0, 0.463, 0.253, 0, -0.0, -0.463, -0.253, 0]
 xᵨs[:lower_body_posture] = [0.31, 0.2, 0.19, -0.31, -0.2, -0.19]
 xᵨs[:zmp] = [0.0, 0.0]
+# xᵨs[:left_hand_target] = [0.2, 0.3, 0.8]
+# xᵨs[:right_hand_target] = [0.5, -0.5, 1.2]
+
 xᵨs[:left_hand_target] = [0.2, 0.3, 0.8]
-xᵨs[:right_hand_target] = [0.5, -0.5, 1.2]
+xᵨs[:right_hand_target] = [0.2, -0.3, 0.8]
 
 ## task maps
 ψs = Dict() 
@@ -36,14 +39,17 @@ xᵨs[:right_hand_target] = [0.5, -0.5, 1.2]
 ψs[:level3] = [] 
 ψs[:level2] = [] 
 ψs[:level1] = [
-                # :upper_body_posture,
+                :upper_body_posture,
                 :lower_body_posture,
                 # :com_target,
                 :dodge,
                 :zmp_upper,
                 :zmp_lower,
-                :right_hand_target,
-                :left_hand_target
+                # :right_hand_target,
+                # :left_hand_target,
+
+                # :joint_lower_limit,
+                # :joint_upper_limit
                ] 
 
 
@@ -57,6 +63,8 @@ Ws[:right_hand_target] = 1e0
 Ws[:dodge] = 1e1
 Ws[:zmp_upper] = 1e-1
 Ws[:zmp_lower] = 1e-1
+Ws[:joint_lower_limit] = 1e-4
+Ws[:joint_upper_limit] = 1e-4
 
 ## Priorities
 Pr = Dict()
@@ -93,6 +101,8 @@ Ss[:right_hand_target] = S_whole
 Ss[:dodge] = S_leg 
 Ss[:zmp_upper] = S_toes 
 Ss[:zmp_lower] = S_toes 
+Ss[:joint_lower_limit] = S_arm
+Ss[:joint_upper_limit] = S_arm
 
 
 data = Dict()
@@ -125,8 +135,9 @@ problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
 zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
 
 digit.problem = problem
-digit.obstacle_force = -0.1
+digit.obstacle_force = -1.0
 step(digit)
+dists = []
 
 #Horizon
 T = 5 # seconds
@@ -136,10 +147,13 @@ for i = 1:Horizon
     fabric_controller!(digit)
     step(digit)
     render_sim(digit, visualize) 
+    d = get_closest_dist_to_obstacle(digit)
+    push!(dists, d)
     # @show i
 end
 
 if visualize digit.viewer.close() end
+@show min(dists...)
 
 #=
 conquered: 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 

@@ -29,6 +29,18 @@ function get_closest_point(x, prob)
     return cp
 end
 
+function get_closest_dist_to_obstacle(digit::Digit)
+    q, _, _ = get_generalized_coordinates(digit)
+    com =  kin.p_base_wrt_feet(q) 
+    com[[3, 6]] .+= 0.3
+    pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
+    R = RotZYX([q[di.qbase_yaw], q[di.qbase_pitch], q[di.qbase_roll]]...)
+    head_pose = R*pose
+    obs_closest_point = get_closest_point(head_pose, digit.problem)
+    dist = norm(head_pose-obs_closest_point)
+    return dist
+end
+
 #= 
 https://wrfranklin.org/Research/Short_Notes/pnpoly.html
 =#

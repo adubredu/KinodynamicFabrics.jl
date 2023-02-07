@@ -42,8 +42,8 @@ xᵨs[:right_hand_target] = [0.2, -0.3, 0.8]
                 :dodge,
                 :zmp_upper,
                 :zmp_lower,
-                :right_hand_target,
-                :left_hand_target
+                # :right_hand_target,
+                # :left_hand_target
                ] 
 
 
@@ -127,21 +127,26 @@ model = initialize_solver(N)
 problem.task_data[:qp][:model] = model
 
 digit.problem = problem
-digit.obstacle_force = -0.0
+digit.obstacle_force = -1.0
 step(digit)
 
 #Horizon
 T = 5 # seconds
 Horizon = T/digit.Δt # timesteps
 
+dists = []
+
 for i = 1:Horizon
     qp_controller!(digit)
     step(digit)
     render_sim(digit, visualize) 
+    d = get_closest_dist_to_obstacle(digit)
+    push!(dists, d)
     # @show i
 end
 
 if visualize digit.viewer.close() end
+@show min(dists...)
 
 #=
 conquered: 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 
