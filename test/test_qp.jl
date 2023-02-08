@@ -36,14 +36,14 @@ xᵨs[:right_hand_target] = [0.2, -0.3, 0.8]
 ψs[:level3] = [] 
 ψs[:level2] = [] 
 ψs[:level1] = [
-                :upper_body_posture,
+                # :upper_body_posture,
                 :lower_body_posture,
                 # :com_target,
-                # :dodge,
+                :dodge,
                 :zmp_upper,
                 :zmp_lower,
-                # :right_hand_target,
-                # :left_hand_target
+                :right_hand_target,
+                :left_hand_target
                ] 
 
 

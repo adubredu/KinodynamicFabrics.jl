@@ -1113,10 +1113,7 @@ function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
         ψ(θ, θ̇ , qmotors,  prob)
     end 
     for t in prob.ψ[:level1]
-        ψ = eval(Symbol(t, :_task_map))
-        # S = prob.S[t]  
-        # J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
-        # J = J*S 
+        ψ = eval(Symbol(t, :_task_map)) 
         J = compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob)
         x = ψ(θ, θ̇ , prob)  
         ẋ = J*θ̇ 
