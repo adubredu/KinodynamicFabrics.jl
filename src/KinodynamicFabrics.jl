@@ -28,11 +28,14 @@ export FabricProblem
 
 
 export jvp,
+       integrate,
        get_closest_point,
        display_goal!, 
        activate_fabric!,
        delete_fabric!,
        com_in_support_polygon,
+       compute_prioritized_jacobian,
+       compute_nullspace,
        plot_support_polygon,
        visualize_obstacles!,
        visualize_swing_trajectory,

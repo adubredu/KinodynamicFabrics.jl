@@ -2,11 +2,68 @@ function jvp(f, x, u)
     return FiniteDiff.finite_difference_derivative(t->f(x + t*u), 0.0)
 end
 
+function integrate(qi, qidot, qddot, problem)
+    α=0.0; β=1.0; γ=0.0
+    qdot = qidot*α + qddot*β +  γ*qddot*problem.Δt
+    q = qi + qdot * problem.Δt
+    return q, qdot
+end
+
 function get_obstacle_keypoints(c, r; N = 16)
     Δθ = 2π/N
     θs = 0: Δθ : 2π
     keypoints = [[c[1]+r*cos(θ), c[2]+r*sin(θ)] for θ in θs]
     return keypoints
+end
+
+function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob; prioritize=false)
+    S = prob.S[t]  
+    J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
+    N = I
+    if prioritize && !(t == :zmp_upper_limit || t == :zmp_lower_limit) 
+        N = compute_nullspace_fast(θ, θ̇ ,prob)
+    end
+    J = J*S*N
+    return J
+end
+
+function zmp_limit_task_map(θ, θ̇ , prob::FabricProblem) 
+    params = prob.task_data[:zmp]
+    Kfilter = params[:filter]
+    vprev = params[:prev_com_vel]
+    g = params[:g]
+    p_com = kin.p_COM(θ)
+    v_com = kin.v_COM(θ, θ̇ )
+    h = p_com[3]
+    a_com = ((v_com[1:2] - vprev)/(5e-4)) 
+    a_com = (1-0.01)*params[:prev_a] + 0.01*a_com
+    pz = p_com[1:2] - (h/g)*a_com
+    params[:prev_com_vel] = v_com[1:2]
+    params[:prev_a] = a_com
+    return [params[:upper_limit]-pz[1], pz[1] - params[:lower_limit]]
+end
+
+# accurate but slow
+function compute_nullspace(θ, θ̇ , prob)
+    A = prob.M(θ)
+    ψ = zmp_limit_task_map 
+    J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ)
+    S = prob.S[:zmp_upper_limit]
+    J = J*S
+    J_bar = inv(A)*J'*inv(J*inv(A)*J')
+    N = I - J_bar * J 
+    return N
+end
+
+# approximate but faster
+function compute_nullspace_fast(θ, θ̇ , prob)
+    ψ = zmp_limit_task_map 
+    J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
+    S = prob.S[:zmp_upper_limit]
+    J = J*S  
+    J_bar = J'
+    N = I - J_bar * J 
+    return N
 end
 
 function get_closest_point_to_obstacle(o,r,  x) 
@@ -185,37 +242,7 @@ function convert_to_euler_rates2(quat, ω)
     return [yaw_dot, pitch_dot, roll_dot]
 end
 
-function get_higher_priorities(t::Symbol, prob)
-    priority = prob.priorities[t]
-    priors = []
-    for k in keys(prob.priorities) 
-        if prob.priorities[k] < priority
-            push!(priors, (k, prob.priorities[k]))
-        end
-    end
-    sort!(priors, by=x->x[2])
-    return [p[1] for p in priors]
-end
 
-
-function compute_prioritized_jacobian(t::Symbol, θ, θ̇ , prob)
-    ψ = eval(Symbol(t, :_task_map))
-    Jt = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ)
-    ranked_priors = get_higher_priorities(t, prob)
-    if isempty(ranked_priors)  return Jt end
-    Nu = I(prob.N)
-    task_maps = keys(prob.ψ)
-    for task in ranked_priors
-        if !(task in task_maps) continue end
-        ψp = eval(Symbol(task, :_task_map))
-        Jp = FiniteDiff.finite_difference_jacobian(σ->ψp(σ, θ̇ , prob), θ)
-        # Nu *= I(length(prob.θ)) - (Jp'*Jp)
-        Nu *= I(length(θ)) - (Jp'*pinv(Jp'))
-    end
-    # Nu = diagm(diag(Nu))
-    Jt = Jt*Nu  
-    return Jt
-end 
 
 activate_fabric!(name::Symbol, problem::FabricProblem, level::Int) = if !(name in problem.ψ[Symbol(:level,level)]) push!(problem.ψ[Symbol(:level,level)], name) end
 delete_fabric!(name::Symbol, problem::FabricProblem, level::Int) = deleteat!(problem.ψ[Symbol(:level,level)], findall(x->x==name, problem.ψ[Symbol(:level,level)]))

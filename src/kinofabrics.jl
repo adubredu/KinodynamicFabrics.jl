@@ -869,20 +869,6 @@ function com_target_task_map(θ, θ̇ , prob::FabricProblem)
 end
 
 function dodge_task_map(θ, θ̇ , prob::FabricProblem) 
-    # θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
-    # θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
-    # com_pos =  kin.p_com_wrt_feet(θ)
-    # Rz = RotZ(θ[di.qbase_yaw]) 
-    # com = [(Rz * com_pos[1:3])..., (Rz * com_pos[4:6])...]
-    # com[[3, 6]] .+= 0.37
-    # pose = [0.1+sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
-    # R = RotZYX([θ[di.qbase_yaw], θ[di.qbase_pitch], θ[di.qbase_roll]]...)
-    # pose = R*pose
-    # obs_pose = prob.task_data[:obstacle][:position]
-    # radius = prob.task_data[:obstacle][:radius]
-    # Δ = [(norm(pose-obs_pose)/radius) - 1]
-    # return Δ
-
     θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
     θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
     com =  kin.p_base_wrt_feet(θ) 
@@ -896,8 +882,7 @@ function dodge_task_map(θ, θ̇ , prob::FabricProblem)
     return Δ
 end
 
-
-function zmp_upper_task_map(θ, θ̇ , prob::FabricProblem) 
+function zmp_upper_limit_task_map(θ, θ̇ , prob::FabricProblem) 
     params = prob.task_data[:zmp]
     Kfilter = params[:filter]
     vprev = params[:prev_com_vel]
@@ -910,10 +895,10 @@ function zmp_upper_task_map(θ, θ̇ , prob::FabricProblem)
     pz = p_com[1:2] - (h/g)*a_com
     params[:prev_com_vel] = v_com[1:2]
     params[:prev_a] = a_com
-    return [0.1 - pz[1]]
+    return [params[:upper_limit] - pz[1]]
 end
 
-function zmp_lower_task_map(θ, θ̇ , prob::FabricProblem) 
+function zmp_lower_limit_task_map(θ, θ̇ , prob::FabricProblem) 
     params = prob.task_data[:zmp]
     Kfilter = params[:filter]
     vprev = params[:prev_com_vel]
@@ -926,7 +911,7 @@ function zmp_lower_task_map(θ, θ̇ , prob::FabricProblem)
     pz = p_com[1:2] - (h/g)*a_com
     params[:prev_com_vel] = v_com[1:2]
     params[:prev_a] = a_com
-    return [pz[1] - -0.1]
+    return [pz[1] - params[:lower_limit]]
 end
 
 function joint_lower_limit_task_map(θ, θ̇ , prob::FabricProblem)
@@ -1044,26 +1029,13 @@ function dodge_fabric(x, ẋ, prob::FabricProblem)
     ẍ=-K*diag(δₓ)  
     M = norm(ẍ)*I(length(x)) 
     return (M, ẍ)
-end
+end 
 
-function zmp_fabric(x, ẋ, prob::FabricProblem)
-    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25 
-    N = length(x)
-    W = prob.W[:zmp]
-    k = W*k  
-    Δx = x - prob.xᵨ[:zmp]
-    ψ(θ) = 0.5*θ'*k*θ
-    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*δx - β*ẋ 
-    M = λ * I(N)
-    return (M, ẍ)
-end
-
-function zmp_upper_fabric(x, ẋ, prob::FabricProblem)
+function zmp_upper_limit_fabric(x, ẋ, prob::FabricProblem)
     λ = 0.25
     α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
     s = zero(ẋ)
-    K = prob.W[:zmp_upper]
+    K = prob.W[:zmp_upper_limit]
     for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
     M = diagm(s.*(λ./x))
     ψ(θ) = (K/2) .* s .* (1 ./ θ)
@@ -1073,11 +1045,11 @@ function zmp_upper_fabric(x, ẋ, prob::FabricProblem)
     return (M, ẍ)
 end
 
-function zmp_lower_fabric(x, ẋ, prob::FabricProblem)
+function zmp_lower_limit_fabric(x, ẋ, prob::FabricProblem)
     λ = 0.25
     α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
     s = zero(ẋ)
-    K = prob.W[:zmp_lower]
+    K = prob.W[:zmp_lower_limit]
     for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
     M = diagm(s.*(λ./x))
     ψ(θ) = (K/2) .* s .* (1 ./ θ)
@@ -1128,23 +1100,24 @@ end
 function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
     xₛ = []; ẋₛ = []; cₛ = []; 
     Mₛ = []; ẍₛ = []; Jₛ =  [] 
-    # for t in prob.ψ[:level4]
-    #     ψ = eval(Symbol(t, :_task_map))
-    #     ψ(θ, θ̇ , qmotors,  prob)
-    # end
-    # for t in prob.ψ[:level3]
-    #     ψ = eval(Symbol(t, :_task_map))
-    #     ψ(θ, θ̇ , qmotors,  prob)
-    # end
-    # for t in prob.ψ[:level2]
-    #     ψ = eval(Symbol(t, :_task_map))
-    #     ψ(θ, θ̇ , qmotors,  prob)
-    # end 
+    for t in prob.ψ[:level4]
+        ψ = eval(Symbol(t, :_task_map))
+        ψ(θ, θ̇ , qmotors,  prob)
+    end
+    for t in prob.ψ[:level3]
+        ψ = eval(Symbol(t, :_task_map))
+        ψ(θ, θ̇ , qmotors,  prob)
+    end
+    for t in prob.ψ[:level2]
+        ψ = eval(Symbol(t, :_task_map))
+        ψ(θ, θ̇ , qmotors,  prob)
+    end 
     for t in prob.ψ[:level1]
         ψ = eval(Symbol(t, :_task_map))
-        S = prob.S[t]  
-        J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
-        J = J*S 
+        # S = prob.S[t]  
+        # J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
+        # J = J*S 
+        J = compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob)
         x = ψ(θ, θ̇ , prob)  
         ẋ = J*θ̇ 
         c = zero(x) 
@@ -1160,9 +1133,8 @@ function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
 end
 
 function fabric_compute(q, qdot, qmotors,  problem)
-    θ̈d = fabric_solve(copy(q), copy(qdot), qmotors,  problem) 
-    θ̇d = θ̈d
-    θd = q + θ̇d*problem.Δt
+    θ̈d = fabric_solve(copy(q), copy(qdot), qmotors,  problem)  
+    θd, θ̇d = integrate(q, qdot, θ̈d, problem)
 
     q_out = copy(q)
     qdot_out = copy(qdot)
