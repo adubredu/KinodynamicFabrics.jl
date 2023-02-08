@@ -172,12 +172,6 @@ function compute_alip_foot_placement(params)
     Lx_eos_est = -1*mass*zH*lip_constant*sinh(lip_constant*T_r)*yc + cosh(lip_constant*T_r) * Lx_st
     Ly_eos_est = mass*zH*lip_constant*sinh(lip_constant*T_r)*xc + cosh(lip_constant*T_r)*Ly_st 
 
-    # p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*Ly_eos_est) / (mass*zH*lip_constant*sinh(lip_constant*Ts))
-    # p_com_wrt_sw_eos_y = -(Lx_des - cosh(lip_constant*Ts)*Lx_eos_est) / (mass*zH*lip_constant*sinh(lip_constant*Ts))
-
-    # p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*(Ly_eos_est + mass*vz*xc))/(mass*(zH*lip_constant*sinh(lip_constant*Ts)-vz)*cosh(lip_constant*Ts))
-    # p_com_wrt_sw_eos_y = -(Lx_des - cosh(lip_constant*Ts)*(Lx_eos_est - mass*vz*yc))/(mass*(zH*lip_constant*sinh(lip_constant*Ts)-vz)*cosh(lip_constant*Ts))
-
     p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*Ly_eos_est - mass*cosh(lip_constant*Ts) * xc*vz)  /  (mass*zH*lip_constant*sinh(lip_constant*Ts) - mass * cosh(lip_constant*Ts) * vz)
     p_com_wrt_sw_eos_y = (Lx_des - cosh(lip_constant*Ts)*Lx_eos_est + mass*cosh(lip_constant*Ts) * yc*vz)  /  (mass*-zH*lip_constant*sinh(lip_constant*Ts) + mass * cosh(lip_constant*Ts) * vz)
 
