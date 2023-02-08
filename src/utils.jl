@@ -4,7 +4,7 @@ end
 
 function integrate(qi, qidot, qddot, problem)
     α=1e-10; β=1.0; γ=1e-8
-    qdot = qidot*α + qddot*β +  γ*qddot*problem.Δt
+    qdot = α*qidot + β*qddot +  γ*qddot*problem.Δt
     q = qi + qdot * problem.Δt
     return q, qdot
 end
