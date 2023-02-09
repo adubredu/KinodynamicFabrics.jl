@@ -1,37 +1,3 @@
-
-function compute_zmp(q, qdot, problem; Kfilter=1e0)
-    params = problem.task_data[:zmp]
-    tprev = params[:prev_time]
-    t = problem.t
-    vprev = params[:prev_com_vel]
-    g = params[:g]
-    p_com = kin.p_COM(q)
-    v_com = kin.v_COM(q, qdot)
-    h = p_com[3]
-    a_com = ((v_com[1:2] - vprev)/(t-tprev))*Kfilter
-    # @show a_com
-    a_com = (1-0.01)*params[:prev_a] + 0.01*a_com
-    pz = p_com[1:2] - (h/g)*a_com
-    pz = (1-params[:filter])*params[:prev_zmp] + params[:filter]*pz
-
-    params[:prev_time] = t
-    params[:prev_com_vel] = v_com[1:2]
-    params[:prev_zmp] = pz
-    params[:prev_a] = a_com
-
-    println("p_com: $(p_com[1:2])")
-    println("p_zmp: $pz")
-    @show t
-    # println(norm(p_com[1:2]-pz))
-    push!(problem.task_data[:diagnostics][:p_zmp], pz)
-    push!(problem.task_data[:diagnostics][:p_com], p_com[1:2])
-    push!(problem.task_data[:diagnostics][:t], t)
-    push!(problem.task_data[:diagnostics][:norm], norm(p_com[1:2]-pz))
-    println("===")
-    return pz
-end
-
-
 function compute_motor_torques(q, qdot, qdes, qdotdes, q_motors, problem)         
     heading = q[di.qbase_yaw] 
     Rz = RotZ(heading)  
@@ -46,12 +12,8 @@ function compute_motor_torques(q, qdot, qdes, qdotdes, q_motors, problem)
     p_com_world = kin.p_COM(q)
     v_com_world = kin.v_COM(q, qdot)
     p_com_aligned =  Rz' * p_com_world
-    v_com_aligned =  Rz' * v_com_world  
+    v_com_aligned =  Rz' * v_com_world   
 
-    # pz = compute_zmp(q, qdot, problem)
-    # pz_aligned = Rz' * [pz; 0]
-
-    # Main Fabric
     q_motors_des = copy(q_motors)
 
     q_motors_des[di.LeftHipRoll] = qdes[di.qleftHipRoll]
@@ -75,12 +37,7 @@ function compute_motor_torques(q, qdot, qdes, qdotdes, q_motors, problem)
 
     com_midpoint_error = p_com_aligned - 0.5 * (p_left_toe_aligned + p_right_toe_aligned)
     toe_pitch_error = com_midpoint_error[1] 
-    Kerr = 1.3
-    # q_motors_des[di.LeftToeA] =  q_motors_des[di.LeftToeA]  + Kerr*toe_pitch_error
-    # q_motors_des[di.LeftToeB] = q_motors_des[di.LeftToeB] - Kerr*toe_pitch_error
-    # q_motors_des[di.RightToeA] = q_motors_des[di.RightToeA] - Kerr*toe_pitch_error
-    # q_motors_des[di.RightToeB] = q_motors_des[di.RightToeB] + Kerr*toe_pitch_error 
-
+    Kerr = 1.3 
     toe_pitch = qdes[di.qleftToePitch] - Kerr*toe_pitch_error
     toe_roll = qdes[di.qleftToeRoll]
     rtoeA = kin.qm_toe(-toe_pitch, -toe_roll, "a", "right")
