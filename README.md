@@ -1,6 +1,5 @@
 # KinodynamicFabrics.jl
 Julia implementation of the Kinodynamic Fabrics Whole-Body Control framework.
-
 Project webpage: [adubredu.github.io/kinofabs](http://adubredu.github.io/kinofabs)
 
 
