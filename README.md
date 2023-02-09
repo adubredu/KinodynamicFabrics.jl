@@ -1,6 +1,10 @@
 # KinodynamicFabrics.jl
 Julia implementation of the Kinodynamic Fabrics Whole-Body Control framework.
 
+
+![](media/trailer.gif)
+
+
 ## Installation
 1. Clone this repository using the command `git clone -b sim https://github.com/adubredu/KinodynamcFabrics.jl`
 2. Navigate to the parent directory of this repo and type  `julia` in your terminal to launch the Julia REPL.
