@@ -23,3 +23,14 @@ or
 ```
 include("examples/dodge_cannonball_maintain_ee.jl")
 ```
+
+## Citing
+```
+@article{adubredugibson2023,
+    title={Kinodynamic Fabrics for Reactive Whole-Body Control of Bipedal Humanoid robots},
+    author={Adu-Bredu, Alphonsus and Gibson, Grant and Jenkins, Odest Chadwicke and Fazeli, Nima and Grizzle, Jessy},
+    journal={},
+    url={},
+    year={2023}
+}
+```
