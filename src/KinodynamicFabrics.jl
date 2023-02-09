@@ -44,7 +44,8 @@ export jvp,
        wrap_angle,
        behavior_switcher,
        get_closest_point,
-       get_closest_dist_to_obstacle
+       get_closest_dist_to_obstacle,
+       azimuth
 
 export Digit,
         Indices

@@ -1,0 +1,9 @@
+Wed Feb  8 18:53:43 2023
+ERROR: Fixed camera id is outside valid range
+
+Wed Feb  8 18:55:22 2023
+ERROR: Fixed camera id is outside valid range
+
+Wed Feb  8 18:56:40 2023
+ERROR: Fixed camera id is outside valid range
+

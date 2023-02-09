@@ -30,7 +30,7 @@ function initialize_configuration!(digit::Digit)
     end
 end
 
-function load_digit(;visualize=false)
+function load_digit(;visualize=false, save_video=false)
     xml_path = joinpath(dirname(pathof(KinodynamicFabrics)), "model/scene.xml")
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
@@ -39,8 +39,12 @@ function load_digit(;visualize=false)
     digit.data = data
     initialize_configuration!(digit) 
     if visualize 
-        viewer = mujoco_viewer.MujocoViewer(model, data, hide_menus=true, 
-                                width=1200, height=900) 
+        if save_video
+            viewer = mujoco_viewer.MujocoViewer(model, data, "offscreen", hide_menus=true)#, 
+                                # width=1200, height=900) 
+        else
+            viewer = mujoco_viewer.MujocoViewer(model, data,  hide_menus=true)
+        end
         digit.viewer = viewer
     end
     return digit
@@ -60,10 +64,29 @@ function step(digit::Digit)
     digit.problem.t = pyconvert(Float64, digit.data.time)
 end
 
-function render_sim(digit, visualize; fps=50)
+function render_sim(digit, visualize::Bool; fps=50)
     if visualize &&  pyconvert(Bool, digit.viewer.is_alive)
         if round(pyconvert(Float64, digit.data.time % (fps*digit.Δt)); digits=3) == 0.0            
             digit.viewer.render()
+        end
+    end
+end
+
+function render_sim(digit, distance::Float64, duration::Float64, 
+                   total_angle::Float64, pixels; fps=50, elevation=-30.0,
+                            save_video=false)
+    if pyconvert(Bool, digit.viewer.is_alive)
+        if round(pyconvert(Float64, digit.data.time % (fps*digit.Δt)); digits=3) == 0.0            
+            digit.viewer.cam.distance = distance
+            digit.viewer.cam.elevation = elevation
+            digit.viewer.cam.lookat = [0.4, 0.5, 0.1]
+            digit.viewer.cam.azimuth = azimuth_fxn(digit, digit.problem.t, duration, total_angle)
+            if save_video
+                img = digit.viewer.read_pixels()
+                push!(pixels, img)
+            else
+                digit.viewer.render()
+            end
         end
     end
 end

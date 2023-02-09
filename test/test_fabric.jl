@@ -12,7 +12,7 @@ F = 1e1
 N = 30
 
 # init Digit
-visualize = false
+visualize = true
 digit = load_digit(;visualize=visualize)
 
 ## task goals
