@@ -247,7 +247,7 @@ function unit_smooth(normalized_time::Float64)
 end
 
 function azimuth_fxn(digit, time::Float64, duration::Float64, total_rotation::Float64)
-    return 100 + unit_smooth(time/duration) * total_rotation
+    return 200 + unit_smooth(time/duration) * total_rotation
 end
 
 activate_fabric!(name::Symbol, problem::FabricProblem, level::Int) = if !(name in problem.ψ[Symbol(:level,level)]) push!(problem.ψ[Symbol(:level,level)], name) end

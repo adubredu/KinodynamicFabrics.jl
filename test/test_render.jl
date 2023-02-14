@@ -165,4 +165,4 @@ end
 if visualize digit.viewer.close() end
 
 media = pyimport("mediapy")
-media.write_video("fabdodgehoop.mp4", pixels, fps=30)
+media.write_video("media/dodgehoop2.mp4", pixels, fps=30)
