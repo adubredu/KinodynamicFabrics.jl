@@ -12,7 +12,8 @@ N = 30
 
 # init Digit
 visualize = true
-digit = load_digit(;visualize=visualize)
+save_video = true
+digit = load_digit(;visualize=visualize, save_video=save_video)
 
 ## task goals
 xᵨs = Dict()
@@ -158,11 +159,11 @@ pixels = []
 for i = 1:Horizon
     fabric_controller!(digit)
     step(digit)
-    render_sim(digit, 4.5, 2T, 30.0, pixels)  
+    render_sim(digit, 4.5, 2T, 30.0, pixels; save_video=save_video)  
     # @show i
 end
 
 if visualize digit.viewer.close() end
 
 media = pyimport("mediapy")
-media.write_video("media/dodge3.mp4", pixels, fps=30)
+media.write_video("media/dodge3hoop.mp4", pixels, fps=30)
