@@ -16,7 +16,8 @@ function get_obstacle_keypoints(c, r; N = 16)
     return keypoints
 end
 
-function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob; type=:approximate, prioritize=true)
+function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob; 
+                            type=:approximate, prioritize=true)
     S = prob.S[t]  
     J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
     N = I
