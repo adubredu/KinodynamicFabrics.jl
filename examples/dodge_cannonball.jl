@@ -123,7 +123,7 @@ zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
  
 
 digit.problem = problem
-digit.obstacle_force = -40.0 # Newtons
+digit.obstacle_force = -1.0 # Newtons
 step(digit)
 dists = []
 
