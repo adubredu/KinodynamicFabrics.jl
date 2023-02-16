@@ -597,7 +597,8 @@ function dodge_task_map(θ, θ̇ , prob::FabricProblem)
     θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
     θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
     com =  kin.p_base_wrt_feet(θ) 
-    com[[3, 6]] .+= 0.3
+    com[[3, 6]] .+= 0.5
+    # com[[1, 4]] .+= 0.2
     pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
     R = RotZYX([θ[di.qbase_yaw], θ[di.qbase_pitch], θ[di.qbase_roll]]...)
     pose = R*pose

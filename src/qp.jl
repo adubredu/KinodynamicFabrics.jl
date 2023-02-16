@@ -33,7 +33,7 @@ function get_task_space_coordinate(task, θ, θ̇, prob)
     return x
 end
 
-function build_attractors(θ, θ̇, prob; K=5.5) 
+function build_attractors(θ, θ̇, prob; K=6.5) 
     Js = []
     vs = []
     ws = [] 
@@ -119,18 +119,19 @@ function qp_compute(θ, θ̇, qmotors, prob)
     Δt = prob.digit.Δt
     q̇ = model.obj_dict[:q̇]
     Js, vs, ws = build_attractors(copy(θ), copy(θ̇ ), prob) 
-    if :dodge in prob.ψ[:level1]
+    obs_pose = prob.task_data[:obstacle][:position] 
+    if :dodge in prob.ψ[:level1] && obs_pose[1] >= -0.2
         Jds, vds, wds = build_repellers(copy(θ), copy(θ̇ ), prob)
         Js = [Js; Jds]
         vs = [vs; vds]
         ws = [ws; wds]
     end
-    q̇_min, q̇_max = compute_velocity_limits(θ, prob, Δt)   
+    # q̇_min, q̇_max = compute_velocity_limits(θ, prob, Δt)   
 
     @objective(model, Min, 
             sum([w*(J*q̇ - v)'*(J*q̇ - v) for (J, v, w) in zip(Js, vs, ws)]))
 
-    model.ext[:q_lims]   = @constraint(model, q̇_min[digit.arm_joint_indices] .≤ q̇[digit.arm_joint_indices] .≤ q̇_max[digit.arm_joint_indices])
+    # model.ext[:q_lims]   = @constraint(model, q̇_min[digit.arm_joint_indices] .≤ q̇[digit.arm_joint_indices] .≤ q̇_max[digit.arm_joint_indices])
     if :zmp_upper in prob.ψ[:level1] && :zmp_lower in prob.ψ[:level1]
         Jcom_upper,  ẏ_max, _ = compute_zmp_upper_limit(θ, θ̇, prob) 
         Jcom_lower, ẏ_min,  _ = compute_zmp_lower_limit(θ, θ̇, prob)    

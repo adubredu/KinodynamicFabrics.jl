@@ -9,6 +9,7 @@ function set_obstacle_position!(pos::Vector{Float64}, digit::Digit)
 end
 
 function apply_obstacle_force!(digit)
-    digit.data.actuator("obstacle").ctrl[0] = digit.obstacle_force
+    # digit.data.actuator("obstacle").ctrl[0] = digit.obstacle_force
+    digit.data.body("obstacle").xfrc_applied[0] = digit.obstacle_force
 end
  

@@ -39,28 +39,28 @@ xᵨs[:right_hand_target] = [0.6, -0.5, 1.3]
 ψs[:level3] = [] 
 ψs[:level2] = [] 
 ψs[:level1] = [
-                # :upper_body_posture,
+                :upper_body_posture,
                 :lower_body_posture,
                 # :com_target,
                 :dodge,
                 :zmp_upper_limit,
                 :zmp_lower_limit,
-                :right_hand_target,
-                :left_hand_target,
+                # :right_hand_target,
+                # :left_hand_target,
 
-                :joint_lower_limit,
-                :joint_upper_limit
+                # :joint_lower_limit,
+                # :joint_upper_limit
                ] 
 
 
 ## Task weights
 Ws = Dict()
 Ws[:upper_body_posture] = 1e0
-Ws[:lower_body_posture] = 0.7e0
+Ws[:lower_body_posture] = 0.6e0
 Ws[:com_target] = 1e0
 Ws[:left_hand_target] = 1e0
 Ws[:right_hand_target] = 1e0
-Ws[:dodge] = 1e1
+Ws[:dodge] = 4e1
 Ws[:zmp_upper_limit] = 1e-1
 Ws[:zmp_lower_limit] = 1e-1
 Ws[:joint_lower_limit] = 1e-1
@@ -115,7 +115,7 @@ Ss[:joint_upper_limit] = S_arm
 
 data = Dict()
 data[:obstacle] = Dict(
-                :radius=>0.15,
+                :radius=>0.12,
                 :position=>zeros(3),
                 :max_range=>15.0
 )
@@ -147,7 +147,7 @@ zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
  
 
 digit.problem = problem
-digit.obstacle_force = -1.0
+digit.obstacle_force = -30
 step(digit)
 dists = []
 
@@ -159,13 +159,13 @@ for i = 1:Horizon
     fabric_controller!(digit)
     step(digit)
     render_sim(digit, visualize) 
-    # d = get_closest_dist_to_obstacle(digit)
-    # push!(dists, d)
+    d = get_closest_dist_to_obstacle(digit)
+    push!(dists, d)
     # @show i
 end
 
 if visualize digit.viewer.close() end
-# @show min(dists...)
+@show min(dists...)
 
 #=
 conquered: 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 

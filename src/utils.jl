@@ -79,23 +79,30 @@ function get_closest_point(o::Vector{Float64}, x, prob::FabricProblem)
     return cp
 end
 
+# ref: https://math.stackexchange.com/questions/831109/closest-point-on-a-sphere-to-another-point
 function get_closest_point(x, prob)
     c = prob.task_data[:obstacle][:position]
     r = prob.task_data[:obstacle][:radius]
-    cp = c + r/(norm(x-c))*(x-c)
+    cp = c + ((r/norm(x-c))*(x-c))
     return cp
 end
 
 function get_closest_dist_to_obstacle(digit::Digit)
     q, _, _ = get_generalized_coordinates(digit)
     com =  kin.p_base_wrt_feet(q) 
-    com[[3, 6]] .+= 0.3
+    com[[3, 6]] .+= 0.4  
     pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
     R = RotZYX([q[di.qbase_yaw], q[di.qbase_pitch], q[di.qbase_roll]]...)
     head_pose = R*pose
     obs_closest_point = get_closest_point(head_pose, digit.problem)
-    dist = norm(head_pose-obs_closest_point)
-    return dist
+    dist = norm(head_pose-obs_closest_point) 
+    sn = 1
+    obs_pose = digit.problem.task_data[:obstacle][:position]
+    if obs_pose[1] < -0.2 dist=1e10 end
+    # if dist<0.05 && (obs_pose[3]-0.12) < (head_pose[3]-0.06) sn = -1 end
+    # @show (obs_pose[3]-0.12)-(head_pose[3]-0.06)
+    # @show head_pose
+    return dist 
 end
 
 #= 

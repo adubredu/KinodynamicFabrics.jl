@@ -118,5 +118,7 @@ function qp_controller!(digit::Digit)
     qdes, qdotdes, torqdes = qp_compute(q, qdot, qmotors, digit.problem)
     τ = compute_motor_torques(q, qdot, qdes, qdotdes, qmotors, digit.problem)         
     apply_motor_torques!(τ, digit)
+    if pyconvert(Bool, digit.data.time > 1.5)
     apply_obstacle_force!(digit)
+    end
 end

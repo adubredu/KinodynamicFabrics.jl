@@ -12,7 +12,7 @@ F = 1e1
 N = 30
 
 # init Digit
-visualize = false
+visualize = true
 digit = load_digit(;visualize=visualize)
 
 ## task goals
@@ -36,14 +36,14 @@ xᵨs[:right_hand_target] = [0.2, -0.3, 0.8]
 ψs[:level3] = [] 
 ψs[:level2] = [] 
 ψs[:level1] = [
-                # :upper_body_posture,
+                :upper_body_posture,
                 :lower_body_posture,
                 # :com_target,
                 :dodge,
                 :zmp_upper,
                 :zmp_lower,
-                :right_hand_target,
-                :left_hand_target
+                # :right_hand_target,
+                # :left_hand_target
                ] 
 
 
@@ -54,7 +54,7 @@ Ws[:lower_body_posture] = 1e0
 Ws[:com_target] = 1e0
 Ws[:right_hand_target] = 1e-2
 Ws[:left_hand_target] = 1e-2
-Ws[:dodge] = 0.3e1
+Ws[:dodge] = 0.4e1
 Ws[:zmp_upper] = 1e0
 Ws[:zmp_lower] = 1e0
 
@@ -127,11 +127,11 @@ model = initialize_solver(N)
 problem.task_data[:qp][:model] = model
 
 digit.problem = problem
-digit.obstacle_force = -1.0
+digit.obstacle_force = -20.0
 step(digit)
 
 #Horizon
-T = 0.01 # seconds
+T = 3 # seconds
 Horizon = T/digit.Δt # timesteps
 
 dists = []
@@ -140,13 +140,13 @@ for i = 1:Horizon
     qp_controller!(digit)
     step(digit)
     render_sim(digit, visualize) 
-    # d = get_closest_dist_to_obstacle(digit)
-    # push!(dists, d)
+    d = get_closest_dist_to_obstacle(digit)
+    push!(dists, d)
     # @show i
 end
 
 if visualize digit.viewer.close() end
-# @show min(dists...)
+@show min(dists...)
 
 #=
 conquered: 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 
