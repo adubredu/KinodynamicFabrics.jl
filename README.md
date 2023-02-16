@@ -25,7 +25,7 @@ or
 ```
 include("examples/dodge_cannonball_maintain_ee.jl")
 ```
-**Note:** The initial run of either example may have a delayed startup of the *mujoco-python-viewer*. If the interface asks, click `Wait`, and it may take up to 30 seconds to run. After the first run you should not longer have this problem. 
+**Note:** The initial run of either example may have a delayed startup of the *mujoco-python-viewer*. If the interface asks, click `Wait`, and it may take up to 30 seconds to run. After the first run you should not longer have this delay. 
 
 ## Citing
 ```
