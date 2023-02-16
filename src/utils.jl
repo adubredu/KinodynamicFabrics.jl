@@ -93,20 +93,11 @@ function get_closest_dist_to_obstacle(digit::Digit)
     com[[3, 6]] .+= 0.4  
     pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
     R = RotZYX([q[di.qbase_yaw], q[di.qbase_pitch], q[di.qbase_roll]]...)
-    head_pose = R*pose
-    obs_closest_point = get_closest_point(head_pose, digit.problem)
-    dist = norm(head_pose-obs_closest_point) 
-    sn = 1
-    obs_pose = digit.problem.task_data[:obstacle][:position]
-    if obs_pose[1] < -0.2 dist=1e10 end
-    # if dist<0.05 && (obs_pose[3]-0.12) < (head_pose[3]-0.06) sn = -1 end
-    dist= (obs_pose[3]-0.12)-(head_pose[3]-0.06)
-    # @show head_pose
-
-
+    head_pose = R*pose 
     dist=1e10
-    if -0.2 <= obs_pose[1] <= 0.1
-        dist = norm(pose-obs_closest_point) 
+    if -0.2 <= obs_pose[1] <= 0.4
+        ob = [obs_pose[1], obs_pose[2], obs_pose[3]-0.12]
+        dist = norm(head_pose-ob) 
     end
     return dist 
 end
