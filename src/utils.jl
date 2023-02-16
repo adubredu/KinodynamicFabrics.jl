@@ -16,12 +16,16 @@ function get_obstacle_keypoints(c, r; N = 16)
     return keypoints
 end
 
-function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob; prioritize=false)
+function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob; type=:approximate, prioritize=true)
     S = prob.S[t]  
     J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
     N = I
     if prioritize && !(t == :zmp_upper_limit || t == :zmp_lower_limit) 
-        N = compute_nullspace_fast(θ, θ̇ ,prob)
+        if type == :approximate
+            N = compute_nullspace_fast(θ, θ̇ ,prob)
+        elseif type == :accurate
+            N = compute_nullspace(θ, θ̇ ,prob)
+        end
     end
     J = J*S*N
     return J
@@ -45,12 +49,12 @@ end
 
 # accurate but slow
 function compute_nullspace(θ, θ̇ , prob)
-    A = prob.M(θ)
+    D = prob.M(θ)
     ψ = zmp_limit_task_map 
     J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ)
     S = prob.S[:zmp_upper_limit]
     J = J*S
-    J_bar = inv(A)*J'*inv(J*inv(A)*J')
+    J_bar = inv(D)*J'*inv(J*inv(D)*J')
     N = I - J_bar * J 
     return N
 end
