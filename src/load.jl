@@ -30,7 +30,7 @@ function initialize_configuration!(digit::Digit)
     end
 end
 
-function load_digit(;visualize=false, save_video=false)
+function load_digit(;visualize=false, save_video=true)
     xml_path = joinpath(dirname(pathof(KinodynamicFabrics)), "model/scene.xml")
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
@@ -74,7 +74,7 @@ end
 
 function render_sim(digit, distance::Float64, duration::Float64, 
                    total_angle::Float64, pixels; fps=50, elevation=-30.0,
-                            save_video=false)
+                            save_video=true)
     if pyconvert(Bool, digit.viewer.is_alive)
         if round(pyconvert(Float64, digit.data.time % (fps*digit.Δt)); digits=3) == 0.0            
             digit.viewer.cam.distance = distance

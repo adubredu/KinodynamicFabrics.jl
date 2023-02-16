@@ -94,6 +94,7 @@ function get_closest_dist_to_obstacle(digit::Digit)
     pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
     R = RotZYX([q[di.qbase_yaw], q[di.qbase_pitch], q[di.qbase_roll]]...)
     head_pose = R*pose 
+    obs_pose = digit.problem.task_data[:obstacle][:position]
     dist=1e10
     if -0.2 <= obs_pose[1] <= 0.4
         ob = [obs_pose[1], obs_pose[2], obs_pose[3]-0.12]
@@ -251,7 +252,7 @@ function unit_smooth(normalized_time::Float64)
 end
 
 function azimuth_fxn(digit, time::Float64, duration::Float64, total_rotation::Float64)
-    return 200 + unit_smooth(time/duration) * total_rotation
+    return 100 + unit_smooth(time/duration) * total_rotation
 end
 
 activate_fabric!(name::Symbol, problem::FabricProblem, level::Int) = if !(name in problem.ψ[Symbol(:level,level)]) push!(problem.ψ[Symbol(:level,level)], name) end
