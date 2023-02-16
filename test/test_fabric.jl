@@ -60,7 +60,7 @@ Ws[:lower_body_posture] = 0.6e0
 Ws[:com_target] = 1e0
 Ws[:left_hand_target] = 1e0
 Ws[:right_hand_target] = 1e0
-Ws[:dodge] = 4e1
+Ws[:dodge] = 1e1
 Ws[:zmp_upper_limit] = 1e-1
 Ws[:zmp_lower_limit] = 1e-1
 Ws[:joint_lower_limit] = 1e-1
@@ -147,7 +147,7 @@ zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
  
 
 digit.problem = problem
-digit.obstacle_force = -30
+digit.obstacle_force = -15
 step(digit)
 dists = []
 

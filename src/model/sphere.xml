@@ -8,7 +8,7 @@
         <mesh name="hoop" file="hoop.obj" scale="0.1 0.1 0.1"/>
     </asset>
     <worldbody> 
-        <body name="obstacle" pos='1 0 1.55' euler="0 0 0">
+        <body name="obstacle" pos='1 0 1.57' euler="0 0 0">
             <joint name="obstacle" type="slide" limited="true" pos="2 0 1.2" axis='1 0 0' range='-4 2'/> 
             <geom type="sphere" name="green_sphere" pos="0 0 0" size="0.12" mass="0.62369" material="spherebody" class="collision"/>  
         </body>

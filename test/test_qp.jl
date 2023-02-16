@@ -127,7 +127,7 @@ model = initialize_solver(N)
 problem.task_data[:qp][:model] = model
 
 digit.problem = problem
-digit.obstacle_force = -20.0
+digit.obstacle_force = -15.0
 step(digit)
 
 #Horizon

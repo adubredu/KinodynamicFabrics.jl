@@ -100,8 +100,14 @@ function get_closest_dist_to_obstacle(digit::Digit)
     obs_pose = digit.problem.task_data[:obstacle][:position]
     if obs_pose[1] < -0.2 dist=1e10 end
     # if dist<0.05 && (obs_pose[3]-0.12) < (head_pose[3]-0.06) sn = -1 end
-    # @show (obs_pose[3]-0.12)-(head_pose[3]-0.06)
+    dist= (obs_pose[3]-0.12)-(head_pose[3]-0.06)
     # @show head_pose
+
+
+    dist=1e10
+    if -0.2 <= obs_pose[1] <= 0.1
+        dist = norm(pose-obs_closest_point) 
+    end
     return dist 
 end
 
