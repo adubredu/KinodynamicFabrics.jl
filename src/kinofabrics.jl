@@ -11,140 +11,140 @@ function walk_attractor_fabric(x, ẋ, problem)
     Δx = x - vc_goal
     ψ(θ) = 0.5*θ'*k*θ
     δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*δx  
-    M = λ * I(N)
+    ẍ = -k*norm(ẋ)^2*δx  
+    M = W * I(N)
     return (M, ẍ)
 end
 
 function upper_body_posture_fabric(x, ẋ, prob::FabricProblem) 
-    λᵪ = 0.25; k = 4.0;  β=0.75
-    M = λᵪ * I(length(x))
+    λᵪ = 0.25; k = 4.0;  β=0.75; α=1e-3
+    N = length(x)
     W = prob.W[:upper_body_posture] 
     k = W*k 
     Δx = x - prob.xᵨ[:upper_body_posture]
     ψ(θ) = 0.5*θ'*k*θ
     δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*δx - β*ẋ
+    ẍ = -(k + α*(norm(ẋ))^2)*δx - β*ẋ 
+    M = W * I(N)
     return (M, ẍ) 
 end
 
 function lower_body_posture_fabric(x, ẋ, prob::FabricProblem) 
-    λᵪ = 0.25; k = 4.0;  β=0.75
-    M = λᵪ * I(length(x))
+    λᵪ = 0.25; k = 4.0;  β=0.75; α=1e-3
+    N = length(x) 
     W = prob.W[:lower_body_posture] 
     k = W*k 
     Δx = x - prob.xᵨ[:lower_body_posture]
     ψ(θ) = 0.5*θ'*k*θ
-    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*δx - β*ẋ
+    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)  
+    ẍ = -(k + α*(norm(ẋ))^2)*δx - β*ẋ 
+    M = W * I(N) 
     return (M, ẍ) 
 end
 
 function com_target_fabric(x, ẋ, prob::FabricProblem)
-    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25 
+    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25; α=1e-3
     N = length(x)
     W = prob.W[:com_target]
     k = W*k  
     Δx = x - prob.xᵨ[:com_target][1:6]
     ψ(θ) = 0.5*θ'*k*θ
-    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*δx - β*ẋ 
-    M = λ * I(N)
+    δx = FiniteDiff.finite_difference_gradient(ψ, Δx) 
+    ẍ = -(k + α*(norm(ẋ))^2)*δx - β*ẋ 
+    M = W * I(N)
     return (M, ẍ)
 end
 
 function left_hand_target_fabric(x, ẋ, prob::FabricProblem)
-    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25 
+    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25; α=1e-3
     N = length(x)
     W = prob.W[:left_hand_target]
     k = W*k  
     Δx = x - prob.xᵨ[:left_hand_target] 
     ψ(θ) = 0.5*θ'*k*θ
-    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*δx - β*ẋ 
-    M = λ * I(N)
+    δx = FiniteDiff.finite_difference_gradient(ψ, Δx) 
+    ẍ = -(k + α*(norm(ẋ))^2)*δx - β*ẋ 
+    M = W * I(N)
     return (M, ẍ)
 end
 
 function right_hand_target_fabric(x, ẋ, prob::FabricProblem)
-    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25 
+    k = 5.0; αᵩ = 10.0; β=0.5; λ = 0.25; α=1e-3 
     N = length(x)
     W = prob.W[:right_hand_target]
     k = W*k  
     Δx = x - prob.xᵨ[:right_hand_target] 
     ψ(θ) = 0.5*θ'*k*θ
-    δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*δx - β*ẋ 
-    M = λ * I(N)
+    δx = FiniteDiff.finite_difference_gradient(ψ, Δx) 
+    ẍ = -(k + α*(norm(ẋ))^2)*δx - β*ẋ 
+    M = W * I(N)
     return (M, ẍ)
 end
 
 function dodge_fabric(x, ẋ, prob::FabricProblem)
-    W = prob.W[:dodge]; k=1.0
+    W = prob.W[:dodge]; k=1.0; λ = 0.2; α=1e-3 
     K = W*k
+    N = length(x)
     max_range = prob.task_data[:obstacle][:max_range]
     s = [v > max_range ? 0.0 : 1.0 for v in x]
     obs_pose = prob.task_data[:obstacle][:position]
     if obs_pose[1] < -0.2 s = zero(s) end
     ϕ(σ) = (K/2) .* s .* (max_range .- σ)./(max_range .* σ).^2
-    δₓ = FiniteDiff.finite_difference_jacobian(ϕ, x) 
-    ẍ=-K*diag(δₓ)  
-    M = norm(ẍ)*I(length(x)) 
+    δₓ = FiniteDiff.finite_difference_jacobian(ϕ, x)  
+    ẍ = -(K + α*(norm(ẋ))^2)*diag(δₓ)
+    M = norm(ẍ)*I(N)  
+    # M = W*(s[1]*(λ/(x'x)))*I(N)
     return (M, ẍ)
 end 
 
 function zmp_upper_limit_fabric(x, ẋ, prob::FabricProblem)
-    λ = 0.25
-    α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
+    λ = 0.25; α=1e-15
     s = zero(ẋ)
     K = prob.W[:zmp_upper_limit]
     for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
     M = diagm(s.*(λ./x))
     ψ(θ) = (K/2) .* s .* (1 ./ θ)
-    δx = FiniteDiff.finite_difference_jacobian(ψ, x) 
-    ẍ = -K*δx
+    δx = FiniteDiff.finite_difference_jacobian(ψ, x)  
+    ẍ = -(K + α*(norm(ẋ))^2)*δx
     ẍ = vec(ẍ) 
     return (M, ẍ)
 end
 
 function zmp_lower_limit_fabric(x, ẋ, prob::FabricProblem)
-    λ = 0.25
-    α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
+    λ = 0.25; α=1e-15
     s = zero(ẋ)
     K = prob.W[:zmp_lower_limit]
     for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
     M = diagm(s.*(λ./x))
     ψ(θ) = (K/2) .* s .* (1 ./ θ)
-    δx = FiniteDiff.finite_difference_jacobian(ψ, x) 
-    ẍ = -K*δx
+    δx = FiniteDiff.finite_difference_jacobian(ψ, x)  
+    ẍ = -(K + α*(norm(ẋ))^2)*δx
     ẍ = vec(ẍ) 
     return (M, ẍ)
 end
 
 function joint_lower_limit_fabric(x, ẋ, prob::FabricProblem)
-    λ = 0.25
-    α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
+    λ = 0.25; α=1e-3
     s = zero(ẋ)
     K = prob.W[:joint_lower_limit]
     for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
     M = diagm(s.*(λ./x))
     ψ(θ) = (K/2) .* s .* (1 ./ θ)
-    δx = FiniteDiff.finite_difference_jacobian(ψ, x) 
-    ẍ = -K*δx
+    δx = FiniteDiff.finite_difference_jacobian(ψ, x)  
+    ẍ = -(K + α*(norm(ẋ))^2)*δx
     ẍ = diag(ẍ)  
     return (M, ẍ) 
 end
 
 function joint_upper_limit_fabric(x, ẋ, prob::FabricProblem)
-    λ = 0.25
-    α₁ = 0.4; α₂ = 0.2; α₃ = 20; α₄ = 5.0
+    λ = 0.25; α=1e-3
     s = zero(ẋ)
     K = prob.W[:joint_upper_limit]
     for i in eachindex(s) s[i] = ẋ[i] < 0.0 ? 1 : 0 end
     M = diagm(s.*(λ./x))
     ψ(θ) = (K/2) .* s .* (1 ./ θ)
     δx = FiniteDiff.finite_difference_jacobian(ψ, x) 
-    ẍ = -K*δx
+    ẍ = -(K + α*(norm(ẋ))^2)*δx
     ẍ = diag(ẍ) 
     return (M, ẍ)
 end

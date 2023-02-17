@@ -49,8 +49,8 @@ xᵨs[:right_hand_target] = [0.6, -0.5, 1.3]
 ## Task weights
 Ws = Dict()
 Ws[:upper_body_posture] = 1e0
-Ws[:lower_body_posture] = 0.7e0  
-Ws[:dodge] = 1e1
+Ws[:lower_body_posture] = 0.6e0  
+Ws[:dodge] = 1.5e1
 Ws[:zmp_upper_limit] = 1e-1
 Ws[:zmp_lower_limit] = 1e-1
 Ws[:joint_lower_limit] = 1e-1
