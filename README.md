@@ -30,7 +30,7 @@ include("examples/dodge_cannonball_maintain_ee.jl")
 ## Citing
 ```
 @article{adubredugibson2023,
-    title={Exploring Kinodynamic Fabrics for Reactive Whole-Body Control of Underactuated Humanoid robots},
+    title={Exploring Kinodynamic Fabrics for Reactive Whole-Body Control of Underactuated Humanoid Robots},
     author={Adu-Bredu, Alphonsus and Gibson, Grant and Jenkins, Odest Chadwicke and Grizzle, Jessy},
     journal={},
     url={},
