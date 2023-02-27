@@ -13,7 +13,8 @@ Project webpage: [adubredu.github.io/kinofabs](http://adubredu.github.io/kinofab
 ## Usage
 Checkout the [examples](examples) folder for usage examples.
 
-* To run the dodge ball example, run the following command
+### Dodge Ball
+To run the dodge ball example, run the following command
 ```
 include("examples/dodge_ball.jl")
 ```
@@ -23,7 +24,7 @@ You should see the visualization below:
 
 ![](media/dodge.gif)
 
-
+### Dodge Ball with End-Effector Goal
 To run the dodge ball with end-effector goal example, run the following command
 ```
 include("examples/dodge_ball_maintain_ee.jl")
