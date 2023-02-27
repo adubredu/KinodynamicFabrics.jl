@@ -1,0 +1,16 @@
+<mujoco model="gauntlet">
+    <compiler  meshdir='obj' texturedir='obj'/>
+    <asset>
+        <!-- <mesh name='left_finger' scale='1 1 1' file='lfinger.obj'/> -->
+        <mesh name='right_finger' scale='1 1 1' file='rfinger.obj'/>
+        <mesh name='gauntlet_body' scale='1 1 1' file='gauntlet.obj'/>
+    </asset>
+    <worldbody>  
+        <body name="gauntlet" pos='0 0 1' euler="0 0 0"> 
+            <geom type='mesh' mesh='gauntlet_body' pos='0 0 0' mass="0.05" euler='90 0 -0'  />  
+            <body name="right_finger" pos='0.05 0.05 0' euler="0 0 0">
+                <geom type='mesh' mesh='right_finger' pos='0 0 0' mass="0.05" euler='0 0 -0'  /> 
+            </body>
+        </body>
+    </worldbody>  
+</mujoco>

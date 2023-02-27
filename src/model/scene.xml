@@ -1,7 +1,7 @@
 <mujoco model="digit scene">
 
   <include file="digit-v3.xml"/> 
-    <include file="sphere.xml"/>
+    <!-- <include file="sphere.xml"/> -->
 
   <statistic center="0 0 0.55" extent="1.1"/>
 
@@ -22,7 +22,7 @@
 
   <worldbody>
      <light pos="0 0 3" dir="0 0 -1"  directional="false"/>
-    <geom name="floor" size="0 0 .125" type="plane" material="groundplane" conaffinity="15" condim="3" friction='0.7 0.01 0.005' pos='0 0 0' priority='100'/> 
+    <geom name="floor" size="0 0 .125" type="plane" material="groundplane" conaffinity="15" condim="3" friction='1.0 0.005 0.0001' pos='0 0 0' priority='100'/> 
   </worldbody>  
 
 

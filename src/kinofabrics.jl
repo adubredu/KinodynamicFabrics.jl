@@ -1,4 +1,5 @@
 include("helpers.jl")
+include("alip.jl")
 include("task_maps.jl")
 
 ## Fabric Components
@@ -11,8 +12,8 @@ function walk_attractor_fabric(x, ẋ, problem)
     Δx = x - vc_goal
     ψ(θ) = 0.5*θ'*k*θ
     δx = FiniteDiff.finite_difference_gradient(ψ, Δx)
-    ẍ = -k*norm(ẋ)^2*δx  
-    M = W * I(N)
+    ẍ = -k*δx  
+    M = λ * I(N)
     return (M, ẍ)
 end
 
@@ -159,8 +160,8 @@ function fabric_eval(x, ẋ, name::Symbol, prob::FabricProblem)
     return (M, ẍ)
 end
 
-function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
-    xₛ = []; ẋₛ = []; cₛ = []; 
+function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem; prioritize=true)
+    xₛ = []; ẋₛ = []; cₛ = []; qvel = zero(θ)
     Mₛ = []; ẍₛ = []; Jₛ =  [] 
     for t in prob.ψ[:level4]
         ψ = eval(Symbol(t, :_task_map))
@@ -174,12 +175,14 @@ function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
         ψ = eval(Symbol(t, :_task_map))
         ψ(θ, θ̇ , qmotors,  prob)
     end 
-    for t in prob.ψ[:level1]
-        ψ = eval(Symbol(t, :_task_map)) 
-        J = compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob)
+    for t in prob.ψ[:level1] 
+        ψ = eval(Symbol(t, :_task_map))
+        S = prob.S[t]  
+        J, qvel = compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob, prob.mode)
+        J = J*S 
         x = ψ(θ, θ̇ , prob)  
         ẋ = J*θ̇ 
-        c = zero(x) 
+        c = zero(x)  
         M, ẍ = fabric_eval(x, ẋ, t, prob)   
         push!(xₛ, x); push!(ẋₛ, ẋ); push!(cₛ, c)
         push!(Mₛ, M); push!(ẍₛ, ẍ); push!(Jₛ, J) 
@@ -188,30 +191,23 @@ function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
     fᵣ = sum([J' * M * (ẍ - c) for (J, M, ẍ, c) in zip(Jₛ, Mₛ, ẍₛ, cₛ)])
     Mᵣ = convert(Matrix{Float64}, Mᵣ)  
     q̈ = pinv(Mᵣ) * fᵣ
-    return  q̈  
+    return  q̈, qvel  
 end
 
-function fabric_compute(q, qdot, qmotors,  problem)
-    θ̈d = fabric_solve(copy(q), copy(qdot), qmotors,  problem)  
-    θd, θ̇d = integrate(q, qdot, θ̈d, problem)
-
+function fabric_compute(q, qdot, qmotors,  problem; prioritize=true)
+    θ̈d, qvel = fabric_solve(copy(q), copy(qdot), qmotors,  problem; prioritize=prioritize)  
+    θd, θ̇d = integrate(q, qdot, θ̈d, problem, problem.mode) 
     q_out = copy(q)
     qdot_out = copy(qdot)
-
-    toe_indices = [di.qleftToePitch, di.qleftToeRoll, di.qrightToePitch, di.qrightToeRoll]
-
+    toe_indices = [qleftToePitch, qleftToeRoll, qrightToePitch, qrightToeRoll]
     q_out[problem.digit.leg_joint_indices] = θd[problem.digit.leg_joint_indices]
     q_out[problem.digit.arm_joint_indices] = θd[problem.digit.arm_joint_indices]
     q_out[toe_indices] = θd[toe_indices]  
-
     qdot_out[problem.digit.arm_joint_indices] = θ̇d[problem.digit.arm_joint_indices]
-    qdot_out[problem.digit.leg_joint_indices] = θ̇d[problem.digit.leg_joint_indices] 
+    qdot_out[problem.digit.leg_joint_indices] = θ̇d[problem.digit.leg_joint_indices] + qvel[problem.digit.leg_joint_indices]
     qdot_out[toe_indices] = θ̇d[toe_indices] 
-
-
     q_out = clamp.(q_out, problem.digit.θ_min, problem.digit.θ_max)  
     qdot_out = clamp.(qdot_out, problem.digit.θ̇_min, problem.digit.θ̇_max) 
-
     τ = zero(q_out) 
     return  q_out, qdot_out, τ
 end

@@ -1,0 +1,14 @@
+<mujoco model="baskethoop">  
+    <compiler  meshdir='obj' texturedir='obj'/>
+    <asset>
+        <material name="hoopbody"  texuniform="true" rgba="1 1 0 1"
+            reflectance="0.8" shininess="0.9"/>
+        <mesh name="hoop" file="dodge_hoop.obj" scale="0.1 0.1 0.1"/>
+    </asset>
+    <worldbody>  
+        <body name="hoop" pos='0.5 -0.5 1.3' euler="0 0 90">
+            <joint name="passive"   limited="false" pos="0 0 0" axis='1 0 0'  /> 
+            <geom type='mesh' mesh='hoop' pos='0 0 0'  euler='-0 0 -0'   material="hoopbody" />  
+        </body>
+    </worldbody>    
+</mujoco>

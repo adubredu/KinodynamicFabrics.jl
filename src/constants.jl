@@ -16,6 +16,8 @@ qleftShoulderRoll = 15
 qleftShoulderPitch = 16
 qleftShoulderYaw = 17
 qleftElbow = 18
+qleftKneeToShin = 11
+qleftShinToTarsus = 12
 qrightHipRoll = 19
 qrightHipYaw = 20
 qrightHipPitch = 21
@@ -28,6 +30,8 @@ qrightShoulderRoll = 27
 qrightShoulderPitch = 28
 qrightShoulderYaw = 29
 qrightElbow = 30
+qrightKneeToShin = 23
+qrightShinToTarsus = 24
 
 LeftHipRoll = 1
 LeftHipYaw = 2

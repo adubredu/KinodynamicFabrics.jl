@@ -2,10 +2,19 @@ function jvp(f, x, u)
     return FiniteDiff.finite_difference_derivative(t->f(x + t*u), 0.0)
 end
 
-function integrate(qi, qidot, qddot, problem)
-    α=1e-10; β=1.0; γ=1e-8
+function integrate(qi, qidot, qddot, problem::FabricProblem, mode::StandingMode)
+    α=1e-10; β=1.0; γ=1e-8; Δt = problem.Δt 
     qdot = α*qidot + β*qddot +  γ*qddot*problem.Δt
-    q = qi + qdot * problem.Δt
+    q = qi + qdot * Δt
+    return q, qdot
+end
+
+function integrate(qi, qidot, qddot, problem::FabricProblem, mode::WalkingMode)
+    α=1e-10; β=1.0; γ=1e-8; Δt = 1.0 
+    qdot = α*qidot + β*qddot +  γ*qddot*problem.Δt
+    q = qi + qdot * Δt
+    idx = problem.digit.arm_joint_indices
+    q[idx] = qi[idx] + qdot[idx] * Δt*1e-1
     return q, qdot
 end
 
@@ -16,8 +25,21 @@ function get_obstacle_keypoints(c, r; N = 16)
     return keypoints
 end
 
-function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob; 
-                            type=:approximate, prioritize=true)
+function compute_task_map_jacobian(t, ψ, θ, θ̇ , prob::FabricProblem)  
+    if t == :walk_attractor
+        params = prob.task_data[:walk]
+        J = params[:swing_foot] == :right ? kin.Jvc_walk_LS(θ) : kin.Jvc_walk_RS(θ)
+        J[:, params[:indices].idx_q_sw_knee_] = J[:, params[:indices].idx_q_sw_knee_] - J[:, params[:indices].idx_q_sw_ShinToTarsus_]
+        J[:, params[:indices].idx_q_st_knee_] = J[:, params[:indices].idx_q_st_knee_] - J[:, params[:indices].idx_q_st_ShinToTarsus_]
+        J[:, params[:indices].idx_q_st_knee_] = J[:, params[:indices].idx_q_st_knee_] + 0.5*J[:, params[:indices].idx_q_st_hippitch_]
+    else
+        J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
+    end 
+    return J
+end
+
+function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob::FabricProblem, mode::StandingMode; 
+                            type=:approximate, prioritize=false)
     S = prob.S[t]  
     J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
     N = I
@@ -29,7 +51,23 @@ function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob;
         end
     end
     J = J*S*N
-    return J
+    return J, zeros(prob.N)
+end
+
+function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob::FabricProblem, mode::WalkingMode; 
+                            type=:approximate, prioritize=true)
+    qvel = zeros(prob.N)
+    if t == :walk_attractor
+        params = prob.task_data[:walk]
+        J = params[:swing_foot] == :right ? kin.Jvc_walk_LS(θ) : kin.Jvc_walk_RS(θ)
+        J[:, params[:indices].idx_q_sw_knee_] = J[:, params[:indices].idx_q_sw_knee_] - J[:, params[:indices].idx_q_sw_ShinToTarsus_]
+        J[:, params[:indices].idx_q_st_knee_] = J[:, params[:indices].idx_q_st_knee_] - J[:, params[:indices].idx_q_st_ShinToTarsus_]
+        J[:, params[:indices].idx_q_st_knee_] = J[:, params[:indices].idx_q_st_knee_] + 0.5*J[:, params[:indices].idx_q_st_hippitch_]        
+        qvel = (J*prob.S[t])\prob.xᵨ[:walk_attractor][5:end]
+    else
+        J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
+    end 
+    return J, qvel
 end
 
 function zmp_limit_task_map(θ, θ̇ , prob::FabricProblem) 
@@ -49,7 +87,7 @@ function zmp_limit_task_map(θ, θ̇ , prob::FabricProblem)
 end
 
 # accurate but slow
-function compute_nullspace(θ, θ̇ , prob)
+function compute_nullspace(θ, θ̇ , prob::FabricProblem)
     D = prob.M(θ)
     ψ = zmp_limit_task_map 
     J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ)
@@ -61,7 +99,7 @@ function compute_nullspace(θ, θ̇ , prob)
 end
 
 # approximate but faster
-function compute_nullspace_fast(θ, θ̇ , prob)
+function compute_nullspace_fast(θ, θ̇ , prob::FabricProblem)
     ψ = zmp_limit_task_map 
     J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ) 
     S = prob.S[:zmp_upper_limit]
@@ -85,7 +123,7 @@ function get_closest_point(o::Vector{Float64}, x, prob::FabricProblem)
 end
 
 # ref: https://math.stackexchange.com/questions/831109/closest-point-on-a-sphere-to-another-point
-function get_closest_point(x, prob)
+function get_closest_point(x, prob::FabricProblem)
     c = prob.task_data[:obstacle][:position]
     r = prob.task_data[:obstacle][:radius]
     cp = c + ((r/norm(x-c))*(x-c))
@@ -97,7 +135,7 @@ function get_closest_dist_to_obstacle(digit::Digit)
     com =  kin.p_base_wrt_feet(q) 
     com[[3, 6]] .+= 0.4  
     pose = [sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
-    R = RotZYX([q[di.qbase_yaw], q[di.qbase_pitch], q[di.qbase_roll]]...)
+    R = RotZYX([q[qbase_yaw], q[qbase_pitch], q[qbase_roll]]...)
     head_pose = R*pose 
     obs_pose = digit.problem.task_data[:obstacle][:position]
     dist=1e10
@@ -141,7 +179,7 @@ function plot_support_polygon(q)
     plot!([com[1]], [com[2]], seriestype=:scatter, color=:red)
 end
 
-function visualize_obstacles!(prob)
+function visualize_obstacles!(prob::FabricProblem)
     fig = Figure()
     ax = Axis(fig[1,1], aspect=DataAspect(), limits=(-1.,1.,-1.,1.))
     pos = prob.Obstacle[:ball](prob.t)

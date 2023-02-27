@@ -1,0 +1,45 @@
+<mujoco model="package">  
+    <compiler  meshdir='obj' texturedir='obj'/>
+    <asset>
+        <material name="amazonbody"  texuniform="true"  texture="amazonbody"/> 
+        <texture type="2d" name="amazonbody" file="amazon.png"/>
+        <mesh name='amazonbody' scale='1 1 1' file='amazon_box.obj'/>
+
+        <material name="tablebody"  texuniform="true"  texture="tablebody"/> 
+        <texture type="2d" name="tablebody" file="table.png"/>
+        <mesh name='tablebody' scale='1 1 1' file='table.obj'/>
+    </asset>
+    <worldbody> 
+        <body name="package" pos='0.45 0 0.5' euler="0 90 90">
+            <joint name="package" type="free"  /> 
+            <geom type='mesh' mesh='amazonbody' pos='0 0 0' euler='-0 0 -0' material='amazonbody'/>        
+            <geom type='box' size='0.2 0.1 0.15' pos='0 0.1 0.0' euler='-0 0 -0'  friction='1.0 0.005 0.0001' contype='4' conaffinity="15" mass='0.05' condim="3" rgba="0 0 0 0" />
+        </body>  
+        <body name="package2" pos='0.45 0 0.25' euler="0 90 90">
+            <joint name="package2" type="free"  /> 
+            <geom type='mesh' mesh='amazonbody' pos='0 0 0' euler='-0 0 -0' material='amazonbody'/>        
+            <geom type='box' size='0.2 0.1 0.15' pos='0 0.1 0.0' euler='-0 0 -0' friction='1.0 0.005 0.0001' contype='4' conaffinity='15' mass='0.05' rgba="0 0 0 0" condim="3"/>
+        </body>
+        <body name="package3" pos='0.45 0 0' euler="0 90 90">
+            <joint name="package3" type="free"  /> 
+            <geom type='mesh' mesh='amazonbody' pos='0 0 0' euler='-0 0 -0' material='amazonbody'/>        
+            <geom type='box' size='0.2 0.1 0.15' pos='0 0.1 0.0' euler='-0 0 -0' friction='1.0 0.005 0.0001' contype='4' conaffinity='15' mass='0.05' rgba="0 0 0 0" condim="3"/>
+        </body>
+        <body name="package4" pos='0.45 0 1.0' euler="0 90 90">
+            <joint name="package4" type="free"  /> 
+            <geom type='mesh' mesh='amazonbody' pos='0 0 0' euler='-0 0 -0' material='amazonbody'/>        
+            <geom type='box' size='0.2 0.1 0.15' pos='0 0.1 0.0' euler='-0 0 -0'  friction='1.0 0.005 0.0001' contype='4' conaffinity="15" mass='0.05' condim="3" rgba="0 0 0 0" />
+        </body>
+         <body name="package5" pos='0.45 0 1.5' euler="0 90 90">
+            <joint name="package5" type="free"  /> 
+            <geom type='mesh' mesh='amazonbody' pos='0 0 0' euler='-0 0 -0' material='amazonbody' mass="0.05" friction='0.7 0.01 0.005' class="collision"/>        
+            <!-- <geom type='box' size='0.2 0.1 0.15' pos='0 0.1 0.0' euler='-0 0 -0' friction='0.7 0.005 0.0001' mass="0.0005" contype='4' conaffinity='15' mass='0.00005' rgba="0 0 0 1" condim="3" priority="100"/> -->
+        </body>
+        <body name="table" pos='4 -2 1.0' euler="0 90 90">
+            <joint name="table" type="free"  /> 
+            <geom type='mesh' mesh='tablebody' pos='0 0 0' euler='-0 0 -0' material='tablebody'/>        
+            <geom type='box' size='0.5 0.355 0.25' pos='0 -0.325 0 ' euler='-0 0.0 -0'  friction='1.0 0.005 0.0001' contype='4' conaffinity="15" mass='0.05' condim="3" rgba="0 0 0 0" />
+        </body>
+    </worldbody>  
+  
+</mujoco>

@@ -2,16 +2,16 @@ function update_walking_observation(q, qdot, qmotors,  params, problem)
     params[:t] = problem.t
     params[:q] = q
     params[:qdot] = qdot
-    params[:qmotors] = collect(qmotors)
-    params[:leftHeelSpring] = observation.joint.position[5]
-    params[:rightHeelSpring] = observation.joint.position[10]
-    params[:s] = (params[:t] - params[:t0])/params[:swing_time]
+    params[:qmotors] = qmotors
+    params[:leftHeelSpring] = pyconvert(Float64, problem.digit.data.joint("left-heel-spring").qpos[0])
+    params[:rightHeelSpring] = pyconvert(Float64, problem.digit.data.joint("right-heel-spring").qpos[0])
+    params[:s] = (params[:t] - params[:t0])/params[:swing_time]  
 end
 
 
 function init_params(params)
     if !params[:inited] 
-        params[:target_heading] = params[:q][di.qbase_yaw]
+        # params[:target_heading] = params[:q][qbase_yaw]
         params[:inited] = true
     end
 end
@@ -19,7 +19,7 @@ end
 
 function made_impact(params)
     deflection = params[:swing_foot] == :left ? params[:leftHeelSpring] : params[:rightHeelSpring]
-    if params[:s] > 1.0 || (params[:s] > 0.5 && abs(deflection) > 0.015)
+    if params[:s] > 1.0 || (params[:s] > 0.5 && abs(deflection) > 0.012)
         return true
     end
     return false
@@ -42,65 +42,65 @@ function check_stance_switch(params)
         right_toe = kin.p_toe_pitch_joint_right(params[:q])
         params[:target_heading] = wrap_to_pi(params[:target_heading] + params[:vel_des_target][3]*params[:swing_time])
         if params[:swing_foot] == :right
-            st_heading_bos = wrap_to_pi(params[:q][di.qbase_yaw] - params[:q][di.qleftHipYaw])
+            st_heading_bos = wrap_to_pi(params[:q][qbase_yaw] - params[:q][qleftHipYaw])
             params[:Rz_st] = RotZ(st_heading_bos)
             params[:p_sw_wrt_st_toe_bos] = params[:Rz_st]' * (right_toe - left_toe)
             p_com_w = kin.p_COM(params[:q])
             params[:p_com_wrt_st_bos] = params[:Rz_st]' * (p_com_w - left_toe)
             
-            params[:indices].idx_q_st_hiproll_ = di.qleftHipRoll
-            params[:indices].idx_q_st_hipyaw_ = di.qleftHipYaw
-            params[:indices].idx_q_st_hippitch_  = di.qleftHipPitch
-            params[:indices].idx_q_st_knee_  = di.qleftKnee
-            params[:indices].idx_q_st_KneeToShin_  = di.qleftKneeToShin
-            params[:indices].idx_q_st_ShinToTarsus_  = di.qleftShinToTarsus
+            params[:indices].idx_q_st_hiproll_ = qleftHipRoll
+            params[:indices].idx_q_st_hipyaw_ = qleftHipYaw
+            params[:indices].idx_q_st_hippitch_  = qleftHipPitch
+            params[:indices].idx_q_st_knee_  = qleftKnee
+            params[:indices].idx_q_st_KneeToShin_  = qleftKneeToShin
+            params[:indices].idx_q_st_ShinToTarsus_  = qleftShinToTarsus
 
-            params[:indices].idx_q_sw_hiproll_  = di.qrightHipRoll
-            params[:indices].idx_q_sw_hipyaw_  = di.qrightHipYaw
-            params[:indices].idx_q_sw_hippitch_  = di.qrightHipPitch
-            params[:indices].idx_q_sw_knee_  = di.qrightKnee
-            params[:indices].idx_q_sw_KneeToShin_  = di.qrightKneeToShin
-            params[:indices].idx_q_sw_ShinToTarsus_  = di.qrightShinToTarsus
+            params[:indices].idx_q_sw_hiproll_  = qrightHipRoll
+            params[:indices].idx_q_sw_hipyaw_  = qrightHipYaw
+            params[:indices].idx_q_sw_hippitch_  = qrightHipPitch
+            params[:indices].idx_q_sw_knee_  = qrightKnee
+            params[:indices].idx_q_sw_KneeToShin_  = qrightKneeToShin
+            params[:indices].idx_q_sw_ShinToTarsus_  = qrightShinToTarsus
         
-            params[:indices].idx_m_st_hiproll_  = di.LeftHipRoll
-            params[:indices].idx_m_st_hipyaw_ = di.LeftHipYaw
-            params[:indices].idx_m_st_hippitch_  = di.LeftHipPitch
-            params[:indices].idx_m_st_knee_  = di.LeftKnee
+            params[:indices].idx_m_st_hiproll_  = LeftHipRoll
+            params[:indices].idx_m_st_hipyaw_ = LeftHipYaw
+            params[:indices].idx_m_st_hippitch_  = LeftHipPitch
+            params[:indices].idx_m_st_knee_  = LeftKnee
 
-            params[:indices].idx_m_sw_hiproll_  = di.RightHipRoll
-            params[:indices].idx_m_sw_hipyaw_  = di.RightHipYaw
-            params[:indices].idx_m_sw_hippitch_  = di.RightHipPitch
-            params[:indices].idx_m_sw_knee_  = di.RightKnee
+            params[:indices].idx_m_sw_hiproll_  = RightHipRoll
+            params[:indices].idx_m_sw_hipyaw_  = RightHipYaw
+            params[:indices].idx_m_sw_hippitch_  = RightHipPitch
+            params[:indices].idx_m_sw_knee_  = RightKnee
         else
-            st_heading_bos = wrap_to_pi(params[:q][di.qbase_yaw] - params[:q][di.qrightHipYaw])
+            st_heading_bos = wrap_to_pi(params[:q][qbase_yaw] - params[:q][qrightHipYaw])
             params[:Rz_st] = RotZ(st_heading_bos)
             params[:p_sw_wrt_st_toe_bos] = params[:Rz_st]' * (left_toe - right_toe)
             p_com_w = kin.p_COM(params[:q])
             params[:p_com_wrt_st_bos] = params[:Rz_st]' * (p_com_w - right_toe)
 
-            params[:indices].idx_q_st_hiproll_ = di.qrightHipRoll
-            params[:indices].idx_q_st_hipyaw_ = di.qrightHipYaw
-            params[:indices].idx_q_st_hippitch_  = di.qrightHipPitch
-            params[:indices].idx_q_st_knee_  = di.qrightKnee
-            params[:indices].idx_q_st_KneeToShin_  = di.qrightKneeToShin
-            params[:indices].idx_q_st_ShinToTarsus_  = di.qrightShinToTarsus
+            params[:indices].idx_q_st_hiproll_ = qrightHipRoll
+            params[:indices].idx_q_st_hipyaw_ = qrightHipYaw
+            params[:indices].idx_q_st_hippitch_  = qrightHipPitch
+            params[:indices].idx_q_st_knee_  = qrightKnee
+            params[:indices].idx_q_st_KneeToShin_  = qrightKneeToShin
+            params[:indices].idx_q_st_ShinToTarsus_  = qrightShinToTarsus
 
-            params[:indices].idx_q_sw_hiproll_  = di.qleftHipRoll
-            params[:indices].idx_q_sw_hipyaw_  = di.qleftHipYaw
-            params[:indices].idx_q_sw_hippitch_  = di.qleftHipPitch
-            params[:indices].idx_q_sw_knee_  = di.qleftKnee
-            params[:indices].idx_q_sw_KneeToShin_  = di.qleftKneeToShin
-            params[:indices].idx_q_sw_ShinToTarsus_  = di.qleftShinToTarsus
+            params[:indices].idx_q_sw_hiproll_  = qleftHipRoll
+            params[:indices].idx_q_sw_hipyaw_  = qleftHipYaw
+            params[:indices].idx_q_sw_hippitch_  = qleftHipPitch
+            params[:indices].idx_q_sw_knee_  = qleftKnee
+            params[:indices].idx_q_sw_KneeToShin_  = qleftKneeToShin
+            params[:indices].idx_q_sw_ShinToTarsus_  = qleftShinToTarsus
         
-            params[:indices].idx_m_st_hiproll_  = di.RightHipRoll
-            params[:indices].idx_m_st_hipyaw_ = di.RightHipYaw
-            params[:indices].idx_m_st_hippitch_  = di.RightHipPitch
-            params[:indices].idx_m_st_knee_  = di.RightKnee
+            params[:indices].idx_m_st_hiproll_  = RightHipRoll
+            params[:indices].idx_m_st_hipyaw_ = RightHipYaw
+            params[:indices].idx_m_st_hippitch_  = RightHipPitch
+            params[:indices].idx_m_st_knee_  = RightKnee
 
-            params[:indices].idx_m_sw_hiproll_  = di.LeftHipRoll
-            params[:indices].idx_m_sw_hipyaw_  = di.LeftHipYaw
-            params[:indices].idx_m_sw_hippitch_  = di.LeftHipPitch
-            params[:indices].idx_m_sw_knee_  = di.LeftKnee
+            params[:indices].idx_m_sw_hiproll_  = LeftHipRoll
+            params[:indices].idx_m_sw_hipyaw_  = LeftHipYaw
+            params[:indices].idx_m_sw_hippitch_  = LeftHipPitch
+            params[:indices].idx_m_sw_knee_  = LeftKnee
         end
         
     end
@@ -111,7 +111,7 @@ function compute_alip_foot_placement(params)
     com_wrt_feet = kin.p_com_wrt_feet(params[:q])
     id = params[:swing_foot] == :left ? 6 : 3
     zH = com_wrt_feet[id]
-    params[:walk_height] = zH
+    params[:walk_height] = zH 
     lip_constant = sqrt(9.806/zH)
     Ts = params[:swing_time]
     T_r = (1-params[:s])*Ts
@@ -162,6 +162,10 @@ function compute_alip_foot_placement(params)
 
     p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*Ly_eos_est - mass*cosh(lip_constant*Ts) * xc*vz)  /  (mass*zH*lip_constant*sinh(lip_constant*Ts) - mass * cosh(lip_constant*Ts) * vz)
     p_com_wrt_sw_eos_y = (Lx_des - cosh(lip_constant*Ts)*Lx_eos_est + mass*cosh(lip_constant*Ts) * yc*vz)  /  (mass*-zH*lip_constant*sinh(lip_constant*Ts) + mass * cosh(lip_constant*Ts) * vz)
+
+    # p_com_wrt_sw_eos_x = (Ly_des - cosh(lip_constant*Ts)*Ly_eos_est) / (mass*zH*lip_constant*sinh(lip_constant*Ts))
+    # p_com_wrt_sw_eos_y = -(Lx_des - cosh(lip_constant*Ts)*Lx_eos_est) / (mass*zH*lip_constant*sinh(lip_constant*Ts))
+
 
     p_sw_wrt_st_eos_x = xc_eos_est - p_com_wrt_sw_eos_x
     p_sw_wrt_st_eos_y = yc_eos_est - p_com_wrt_sw_eos_y

@@ -1,12 +1,10 @@
 using Revise 
-using KinodynamicFabrics
-using KinodynamicFabrics.DigitInterface
+using KinodynamicFabrics 
 using KinodynamicFabrics.MuJoCo.PythonCall
 using KinodynamicFabrics.LinearAlgebra
 
 
-const kfb = KinodynamicFabrics
-const di = DigitInterface 
+const kf = KinodynamicFabrics 
 
 F = 1e1
 N = 30
@@ -50,8 +48,8 @@ Pr[:upper_body_posture] = 1
 Pr[:com_target] = 1
 
 ## dynamics functions
-g = kfb.dyn.generalized_gravity
-M = kfb.dyn.mass_inertia_matrix
+g = kf.dyn.generalized_gravity
+M = kf.dyn.mass_inertia_matrix
 
 ## selection matrics 
 s_leg = zeros(N)

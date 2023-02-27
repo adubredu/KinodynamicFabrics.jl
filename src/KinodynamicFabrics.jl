@@ -4,15 +4,20 @@ using StaticArrays
 using FiniteDiff 
 using Reexport
 using Rotations
-using LinearAlgebra
-using DigitInterface   
+using LinearAlgebra    
 using CSV
 using MuJoCo
 using MuJoCo.PythonCall
 using JuMP, OSQP
 
+include("constants.jl")
+include("config.jl")
 include("types.jl")
 include("utils.jl")
+
+include("set.jl")
+include("get.jl")
+include("load.jl")
 
 include("kinematics/kinematics.jl")
 include("dynamics/dynamics.jl")
@@ -20,11 +25,11 @@ include("kinofabrics.jl")
 include("qp.jl")
 include("lowlevel.jl")
 
-include("set.jl")
-include("get.jl")
-include("load.jl")
 
-export FabricProblem
+
+export FabricProblem,
+       WalkingMode,
+       StandingMode
 
 
 export jvp,

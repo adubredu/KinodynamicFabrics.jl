@@ -1,12 +1,10 @@
 using Revise 
-using KinodynamicFabrics
-using KinodynamicFabrics.DigitInterface
+using KinodynamicFabrics 
 using KinodynamicFabrics.MuJoCo.PythonCall
 using KinodynamicFabrics.LinearAlgebra
 
 
-const kfb = KinodynamicFabrics
-const di = DigitInterface 
+const kf = KinodynamicFabrics 
 
 F = 1e1
 N = 30
@@ -39,17 +37,17 @@ xᵨs[:right_hand_target] = [0.6, -0.5, 1.3]
 ψs[:level3] = [] 
 ψs[:level2] = [] 
 ψs[:level1] = [
-                :upper_body_posture,
+                # :upper_body_posture,
                 :lower_body_posture,
                 # :com_target,
                 :dodge,
                 :zmp_upper_limit,
                 :zmp_lower_limit,
-                # :right_hand_target,
-                # :left_hand_target,
+                :right_hand_target,
+                :left_hand_target,
 
-                # :joint_lower_limit,
-                # :joint_upper_limit
+                :joint_lower_limit,
+                :joint_upper_limit
                ] 
 
 
@@ -80,8 +78,8 @@ Pr[:joint_lower_limit] = 2
 Pr[:joint_upper_limit] = 2
 
 ## dynamics functions
-g = kfb.dyn.generalized_gravity
-M = kfb.dyn.mass_inertia_matrix
+g = kf.dyn.generalized_gravity
+M = kf.dyn.mass_inertia_matrix
 
 ## selection matrics 
 s_leg = zeros(N)
@@ -97,7 +95,7 @@ s_whole[[digit.arm_joint_indices; digit.leg_joint_indices]] .= 1.0
 S_whole = diagm(s_whole)
 
 s_toes = zeros(N)
-s_toes[[di.qleftToePitch, di.qleftToeRoll, di.qrightToePitch, di.qrightToeRoll]] .= 1.0
+s_toes[[kf.qleftToePitch, kf.qleftToeRoll, kf.qrightToePitch, kf.qrightToeRoll]] .= 1.0
 S_toes = diagm(s_toes)
 
 Ss = Dict() 
@@ -143,7 +141,7 @@ Js = nothing
 Obstacles = nothing
 
 problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
-zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
+zeros(N), zeros(N), 1.0/F, N, digit, 0.0, StandingMode())
  
 
 digit.problem = problem

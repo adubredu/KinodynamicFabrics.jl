@@ -1,19 +1,18 @@
 using Revise 
-using KinodynamicFabrics
-using KinodynamicFabrics.DigitInterface
+using KinodynamicFabrics 
 using KinodynamicFabrics.MuJoCo.PythonCall
 using KinodynamicFabrics.LinearAlgebra
 
 
-const kfb = KinodynamicFabrics
-const di = DigitInterface 
+const kf = KinodynamicFabrics 
 
 F = 1e1
 N = 30
 
 # init Digit
 visualize = true
-digit = load_digit(;visualize=visualize)
+environment = :dodge_env
+digit = load_digit(;visualize=visualize, env=environment)
 
 ## task goals
 xᵨs = Dict()
@@ -64,8 +63,8 @@ Pr[:upper_body_posture] = 1
 Pr[:com_target] = 1
 
 ## dynamics functions
-g = kfb.dyn.generalized_gravity
-M = kfb.dyn.mass_inertia_matrix
+g = kf.dyn.generalized_gravity
+M = kf.dyn.mass_inertia_matrix
 
 ## selection matrics 
 s_leg = zeros(N)
@@ -121,7 +120,7 @@ Js = nothing
 Obstacles = nothing
 
 problem = FabricProblem(ψs, Js, g, M, Ss, xᵨs, Ws, Obstacles, Pr, data,
-zeros(N), zeros(N), 1.0/F, N, digit, 0.0)
+zeros(N), zeros(N), 1.0/F, N, digit, 0.0, StandingMode())
 
 model = initialize_solver(N)
 problem.task_data[:qp][:model] = model

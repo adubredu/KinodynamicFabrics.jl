@@ -6,19 +6,19 @@ function initialize_solver(N; Δt=1e-3)
 end
 
 function dodge_qp_task_map(θ, θ̇ , prob::FabricProblem)  
-    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
-    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
+    θ[qleftShinToTarsus] = -θ[qleftKnee]
+    θ[qrightShinToTarsus] = -θ[qrightKnee]
     com =  kin.p_base_wrt_feet(θ) 
     com[[3, 6]] .+= 0.5
     pose = [0.15+sum(com[[1,4]])/2, sum(com[[2, 5]])/2, sum(com[[3,6]])/2]
-    R = RotZYX([θ[di.qbase_yaw], θ[di.qbase_pitch], θ[di.qbase_roll]]...)
+    R = RotZYX([θ[qbase_yaw], θ[qbase_pitch], θ[qbase_roll]]...)
     pose = R*pose 
     return pose
 end
 
 function build_jacobian(task, θ, θ̇, S, prob)
-    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
-    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
+    θ[qleftShinToTarsus] = -θ[qleftKnee]
+    θ[qrightShinToTarsus] = -θ[qrightKnee]
     ψ = eval(Symbol(task, :_task_map))
     J = FiniteDiff.finite_difference_jacobian(σ->ψ(σ, θ̇ , prob), θ)
     J = J*S
@@ -26,8 +26,8 @@ function build_jacobian(task, θ, θ̇, S, prob)
 end
 
 function get_task_space_coordinate(task, θ, θ̇, prob)
-    θ[di.qleftShinToTarsus] = -θ[di.qleftKnee]
-    θ[di.qrightShinToTarsus] = -θ[di.qrightKnee]
+    θ[qleftShinToTarsus] = -θ[qleftKnee]
+    θ[qrightShinToTarsus] = -θ[qrightKnee]
     ψ = eval(Symbol(task, :_task_map))
     x = ψ(θ, θ̇, prob)
     return x
@@ -156,7 +156,7 @@ function qp_compute(θ, θ̇, qmotors, prob)
     qdot_out[prob.digit.arm_joint_indices] = θ̇d[prob.digit.arm_joint_indices]
     qdot_out[prob.digit.leg_joint_indices] = θ̇d[prob.digit.leg_joint_indices] 
 
-    toe_indices = [di.qleftToePitch, di.qleftToeRoll, di.qrightToePitch, di.qrightToeRoll]
+    toe_indices = [qleftToePitch, qleftToeRoll, qrightToePitch, qrightToeRoll]
     q_out[toe_indices] = θd[toe_indices]
     qdot_out[toe_indices] = θ̇d[toe_indices] 
 

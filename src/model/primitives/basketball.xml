@@ -1,0 +1,36 @@
+<mujoco model="basketball">  
+    <compiler  meshdir='obj' texturedir='obj'/>
+    <asset>
+        <material name="spherebody"  texuniform="true" texture="basketball"
+            reflectance="0.8" shininess="0.9"/>  
+        <texture type="2d" name="basketball" file="balldimpled.png"/>
+
+        <material name="tablebody"  texuniform="true"  texture="tablebody"/> 
+        <texture type="2d" name="tablebody" file="table.png"/>
+        <mesh name='tablebody' scale='1 1 1' file='table.obj'/>
+
+        <material name="baskethoop"  texuniform="true"  texture="baskethoop"/> 
+        <texture type="2d" name="baskethoop" file="hoop.png"/>
+        <mesh name='baskethoop' scale='1 1 1' file='hoop.obj'/>
+
+        <mesh name='amazonbody' scale='1 1 1' file='amazon_box.obj'/>
+    </asset>
+
+    <worldbody>
+        <body name="basketball" pos='0.49 -0.15 0.9' euler="0 0 0">
+            <freejoint /> 
+            <geom type="sphere" name="green_sphere" pos="0 0 0" size="0.12" mass="0.00000062369" material="spherebody"  />   
+              <geom type='box'  size='0.1 0.08 0.1' pos='0 0.0 -0.03' euler='0 90 90' rgba="1 0 0 0" mass="0.0005" friction='0.7 0.01 0.005' class="collision" />
+            <!-- <geom type='box'  size='0.15 0.005 0.15' pos='0 0.0 -0.05' euler='0 90 90' mass="0.5" friction='0.7 0.01 0.005' class="collision"/>   -->
+            <!-- <geom type='mesh' mesh='amazonbody' pos='0 0 -0.1' euler='-0 90 90'  mass="0.05" rgba="0 0 0 1" friction='0.7 0.01 0.005' class="collision"/> -->
+        </body>
+         <body name="table" pos='0.5 0 0.7' euler="0 90 90"> 
+            <geom type='mesh' mesh='tablebody' pos='0 0 0' euler='-0 0 -0' material='tablebody'/>        
+            <geom type='box' size='0.5 0.355 0.25' pos='0 -0.325 0 ' euler='-0 0.0 -0'  friction='1.0 0.005 0.0001' contype='4' conaffinity="15" mass='0.05' condim="3" rgba="0 0 0 0" />
+        </body>
+       <body name="baskethoop" pos='4 0 0.0' euler="0 90 90"> 
+            <geom type='mesh' mesh='baskethoop' pos='0 0 0' euler='-0 180 0' material='baskethoop' friction='0.7 0.01 0.005'    />
+            <geom type='box'  size='3 0.5 0.5' pos=' 0.0 0 0.4' euler='0 90 90' rgba="0 1 0 0" mass="0.0005" friction='0.7 0.01 0.005' class="collision" />        
+        </body>
+    </worldbody>
+</mujoco>

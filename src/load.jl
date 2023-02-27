@@ -20,23 +20,45 @@ function initialize_configuration!(digit::Digit)
         "right-tarsus" => 0.0,
         "right-toe-pitch" => 0.126,
         "right-toe-roll" => 0.0,
-        "right-shoulder-roll" => 0.15,
-        "right-shoulder-pitch" => -1.1,
+        "right-shoulder-roll" => 0.0,
+        "right-shoulder-pitch" => -0,
         "right-shoulder-yaw" => 0.0,
-        "right-elbow" => 0.145
+        "right-elbow" => 0.0
     )
     for joint in keys(default_configuration)
         digit.data.joint(joint).qpos[0] = default_configuration[joint]
     end
 end
 
-function load_digit(;visualize=false, save_video=false)
-    xml_path = joinpath(dirname(pathof(KinodynamicFabrics)), "model/scene.xml")
+function get_env_path(env::Symbol)
+    if env == :default_env
+        path = "model/default_scene.xml"
+    elseif env == :dodge_env
+        path = "model/dodge_scene.xml"
+    elseif env == :dodge_hoop_env
+        path = "model/dodge_hoop_scene.xml"
+    elseif env == :basketball_env
+        path = "model/basketball_scene.xml"
+    elseif env == :cornhole_env
+        path = "model/cornhole_scene.xml"
+    elseif env == :package_env
+        path = "model/package_scene.xml"
+    else
+        path = "model/default_scene.xml"
+    end
+    return path
+end
+
+
+function load_digit(;visualize=false, save_video=false, env=:default_env)
+    scene_path = get_env_path(env)
+    xml_path = joinpath(dirname(pathof(KinodynamicFabrics)), scene_path)
     model = mujoco.MjModel.from_xml_path(xml_path)
     data = mujoco.MjData(model)
     digit = Digit()
     digit.model = model
     digit.data = data
+    digit.model.actuator_gainprm[0, 0] = 1
     initialize_configuration!(digit) 
     if visualize 
         if save_video
@@ -51,10 +73,12 @@ function load_digit(;visualize=false, save_video=false)
 end
 
 function update_obstacle_position!(digit::Digit)
-    p = digit.data.body("obstacle").xpos
-    digit.problem.task_data[:obstacle][:position][1] = pyconvert(Float64, p[0])
-    digit.problem.task_data[:obstacle][:position][2] = pyconvert(Float64, p[1])
-    digit.problem.task_data[:obstacle][:position][3] = pyconvert(Float64, p[2])
+    if haskey(digit.problem.task_data, :obstacle)
+        p = digit.data.body("obstacle").xpos
+        digit.problem.task_data[:obstacle][:position][1] = pyconvert(Float64, p[0])
+        digit.problem.task_data[:obstacle][:position][2] = pyconvert(Float64, p[1])
+        digit.problem.task_data[:obstacle][:position][3] = pyconvert(Float64, p[2])
+    end
 end
  
 import Base: step
