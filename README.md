@@ -13,7 +13,7 @@ Project webpage: [adubredu.github.io/kinofabs](http://adubredu.github.io/kinofab
 ## Usage
 Checkout the [examples](examples) folder for usage examples.
 
-To run the dodge ball example, run the following command
+* To run the dodge ball example, run the following command
 ```
 include("examples/dodge_ball.jl")
 ```
@@ -69,7 +69,7 @@ You should see the visualization below:
 ![](media/package_delivery.gif)
 
 
-**Note:** The initial run of the example may have a delayed startup of the *mujoco-python-viewer* and other intermittent delays in-between simulation. If the interface asks, click `Wait`, and it may take up to 30 seconds to run. After the first run you should no longer have any delays. 
+**Note:** The initial run of each example may have a delayed startup of the *mujoco-python-viewer* and other intermittent delays in-between simulation. If the interface asks, click `Wait`, and it may take up to 30 seconds to run. After the first run you should no longer have any delays. 
 
 ## Citing
 ```
