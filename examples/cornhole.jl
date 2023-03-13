@@ -126,7 +126,7 @@ data[:cornhole] = Dict(
                     :throw_height=>0.9,
                     :throw_torso_pitch=>0.0,
                     :fling=>false,
-                    :throw_torque=>3.8, 
+                    :throw_torque=>3.8, # hard-coded swing torque. A more elegant approach is to solve for it using projectile motion dynamics
 )
 
 data[:diagnostics] = Dict(
