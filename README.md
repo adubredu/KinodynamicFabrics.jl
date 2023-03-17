@@ -83,3 +83,8 @@ The initial run of each example may have a delayed startup of the *mujoco-python
     year={2023}
 }
 ```
+
+## Branches
+* The `sim` branch is the main branch of this repository, containing all the code to run the simulation demos above
+* The  `experiments` branch contains code to replicate simulation experimental results in the paper
+* The `physical` branch contains code for the physical robot demos
