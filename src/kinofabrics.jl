@@ -159,7 +159,7 @@ function fabric_eval(x, ẋ, name::Symbol, prob::FabricProblem)
     return (M, ẍ)
 end
 
-function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
+function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem; prioritize=true)
     xₛ = []; ẋₛ = []; cₛ = []; 
     Mₛ = []; ẍₛ = []; Jₛ =  [] 
     for t in prob.ψ[:level4]
@@ -176,7 +176,7 @@ function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
     end 
     for t in prob.ψ[:level1]
         ψ = eval(Symbol(t, :_task_map)) 
-        J = compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob)
+        J = compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob;prioritize=prioritize)
         x = ψ(θ, θ̇ , prob)  
         ẋ = J*θ̇ 
         c = zero(x) 
@@ -191,8 +191,8 @@ function fabric_solve(θ, θ̇ , qmotors,  prob::FabricProblem)
     return  q̈  
 end
 
-function fabric_compute(q, qdot, qmotors,  problem)
-    θ̈d = fabric_solve(copy(q), copy(qdot), qmotors,  problem)  
+function fabric_compute(q, qdot, qmotors,  problem; prioritize=true)
+    θ̈d = fabric_solve(copy(q), copy(qdot), qmotors,  problem; prioritize=prioritize)  
     θd, θ̇d = integrate(q, qdot, θ̈d, problem)
 
     q_out = copy(q)

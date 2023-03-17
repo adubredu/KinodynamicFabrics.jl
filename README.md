@@ -10,4 +10,3 @@ Project webpage: [adubredu.github.io/kinofabs](http://adubredu.github.io/kinofab
 3. Press `]` on your keyboard to enter the package manager 
 4. Enter command `activate .` then enter command `instantiate` to download all package dependencies
 5. Once installation is complete, press the `Backspace` key on your keyboard to return to the REPL
-

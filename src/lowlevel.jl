@@ -105,17 +105,17 @@ function compute_motor_torques(q, qdot, qdes, qdotdes, q_motors, problem)
     return τ
 end
 
-function fabric_controller!(digit::Digit)
+function fabric_controller!(digit::Digit; prioritize=true)
     q, qdot, qmotors = get_generalized_coordinates(digit) 
-    qdes, qdotdes, torqdes = fabric_compute(q, qdot, qmotors, digit.problem)
+    qdes, qdotdes, torqdes = fabric_compute(q, qdot, qmotors, digit.problem; prioritize=prioritize)
     τ = compute_motor_torques(q, qdot, qdes, qdotdes, qmotors, digit.problem)         
     apply_motor_torques!(τ, digit)
     apply_obstacle_force!(digit)
 end
 
-function qp_controller!(digit::Digit)
+function qp_controller!(digit::Digit;joint_limit=true)
     q, qdot, qmotors = get_generalized_coordinates(digit) 
-    qdes, qdotdes, torqdes = qp_compute(q, qdot, qmotors, digit.problem)
+    qdes, qdotdes, torqdes = qp_compute(q, qdot, qmotors, digit.problem; joint_limit=joint_limit)
     τ = compute_motor_torques(q, qdot, qdes, qdotdes, qmotors, digit.problem)         
     apply_motor_torques!(τ, digit)
     if pyconvert(Bool, digit.data.time > 1.5)

@@ -26,7 +26,7 @@ function compute_prioritized_jacobian(ψ, t, θ, θ̇ , prob;
             N = compute_nullspace_fast(θ, θ̇ ,prob)
         elseif type == :accurate
             N = compute_nullspace(θ, θ̇ ,prob)
-        end
+        end 
     end
     J = J*S*N
     return J
