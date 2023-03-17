@@ -211,7 +211,7 @@ data[:hoop] = Dict(
                     :load_period=>3.0,
                     :throw_period=>0.5,
                     :fling=>false,
-                    :throw_torque=>-3.0
+                    :throw_torque=>-3.0 # hard-coded throw torque. A more elegant approach is to solve for it using projectile motion dynamics
 
 )
 
