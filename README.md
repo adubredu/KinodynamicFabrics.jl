@@ -1,7 +1,10 @@
 # KinodynamicFabrics.jl
 Julia implementation of the Kinodynamic Fabrics Whole-Body Control framework.
 
-Project webpage: [adubredu.github.io/kinofabs](http://adubredu.github.io/kinofabs)
+Project webpage: [adubredu.github.io/kinofabs](http://adubredu.github.io/kinofabs)  
+Paper:      [arXiv](https://arxiv.org/abs/2303.04279)  
+Authors:    Alphonsus Adu-Bredu*, Grant Gibson*, Jessy W Grizzle  
+*: Equal Contribution
 
 ## Installation
 1. Clone this repository using the command `git clone -b sim https://github.com/adubredu/KinodynamcFabrics.jl`
