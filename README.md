@@ -82,7 +82,7 @@ The initial run of each example may have a delayed startup of the *mujoco-python
     title={Exploring Kinodynamic Fabrics for Reactive Whole-Body Control of Underactuated Humanoid robots},
     author={Adu-Bredu, Alphonsus and Gibson, Grant and Grizzle, Jessy},
     journal={},
-    url={},
+    url={https://arxiv.org/abs/2303.04279},
     year={2023}
 }
 ```
