@@ -42,11 +42,11 @@ xᵨs[:right_hand_target] = [0.6, -0.5, 1.3]
                 :upper_body_posture,
                 :lower_body_posture,
                 # :com_target,
-                # :dodge,
+                :dodge,
                 :zmp_upper_limit,
                 :zmp_lower_limit,
-                # :right_hand_target,
-                # :left_hand_target,
+                :right_hand_target,
+                :left_hand_target,
 
                 :joint_lower_limit,
                 :joint_upper_limit

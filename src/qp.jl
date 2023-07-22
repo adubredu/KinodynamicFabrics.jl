@@ -1,7 +1,7 @@
 function initialize_solver(N; Δt=1e-3)
     model = JuMP.Model(OSQP.Optimizer) 
     set_silent(model)
-    @variable(model, q̇[1:N])
+    @variable(model, Δq[1:N])
     return model
 end
 
@@ -71,11 +71,11 @@ function build_repellers(θ, θ̇, prob; K=5)
     return Js, vs, ws
 end
 
-function compute_velocity_limits(θ, prob, Δt::Float64; K=0.5)
+function compute_configuration_limits(θ, prob, Δt::Float64; K=0.5)
     q_min, q_max = prob.digit.θ_min, prob.digit.θ_max
-    q̇_min = K*(q_min - θ)
-    q̇_max = K*(q_max - θ)
-    return q̇_min, q̇_max
+    Δq_min = K*(q_min - θ)
+    Δq_max = K*(q_max - θ)
+    return Δq_min, Δq_max
 end
 
 function compute_zmp(θ, θ̇ , prob::FabricProblem)
@@ -117,7 +117,7 @@ function qp_compute(θ, θ̇, qmotors, prob; joint_limit=true)
     digit = prob.digit
 
     Δt = prob.digit.Δt
-    q̇ = model.obj_dict[:q̇]
+    Δq = model.obj_dict[:Δq]
     Js, vs, ws = build_attractors(copy(θ), copy(θ̇ ), prob) 
     obs_pose = prob.task_data[:obstacle][:position] 
     if :dodge in prob.ψ[:level1] #&& obs_pose[1] >= -0.2
@@ -126,25 +126,25 @@ function qp_compute(θ, θ̇, qmotors, prob; joint_limit=true)
         vs = [vs; vds]
         ws = [ws; wds]
     end
-    q̇_min, q̇_max = compute_velocity_limits(θ, prob, Δt)   
+    Δq_min, Δq_max = compute_configuration_limits(θ, prob, Δt)   
 
     @objective(model, Min, 
-            sum([w*(J*q̇ - v)'*(J*q̇ - v) for (J, v, w) in zip(Js, vs, ws)]))
+            sum([w*(J*Δq - v)'*(J*Δq - v) for (J, v, w) in zip(Js, vs, ws)]))
 
-    if joint_limit model.ext[:q_lims] = @constraint(model, q̇_min[digit.arm_joint_indices] .≤ q̇[digit.arm_joint_indices] .≤ q̇_max[digit.arm_joint_indices]) end
+    if joint_limit model.ext[:q_lims] = @constraint(model, Δq_min[digit.arm_joint_indices] .≤ Δq[digit.arm_joint_indices] .≤ Δq_max[digit.arm_joint_indices]) end
     if :zmp_upper in prob.ψ[:level1] && :zmp_lower in prob.ψ[:level1]
         Jcom_upper,  ẏ_max, _ = compute_zmp_upper_limit(θ, θ̇, prob) 
         Jcom_lower, ẏ_min,  _ = compute_zmp_lower_limit(θ, θ̇, prob)    
         try delete(model, model.ext[:zmp_upper_limit])  catch nothing; end 
         try delete(model, model.ext[:zmp_lower_limit])  catch nothing; end  
-        model.ext[:zmp_upper_limit] = @constraint(model, (Jcom_upper*q̇)[1] .≤ ẏ_max)
-        model.ext[:zmp_lower_limit] = @constraint(model, ẏ_min .≤ (Jcom_lower*q̇)[1])
+        model.ext[:zmp_upper_limit] = @constraint(model, (Jcom_upper*Δq)[1] .≤ ẏ_max)
+        model.ext[:zmp_lower_limit] = @constraint(model, ẏ_min .≤ (Jcom_lower*Δq)[1])
     end
     optimize!(model)
-    Δq = value.(q̇)
-    q̇sol = Δq/Δt
+    Δq_val = value.(Δq)
+    q̇sol = Δq_val/Δt
 
-    θd = θ+Δq*prob.Δt
+    θd = θ+Δq_val*prob.Δt
     θ̇d = q̇sol
 
     q_out = copy(θ)

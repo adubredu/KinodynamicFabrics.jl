@@ -39,7 +39,7 @@ xᵨs[:right_hand_target] = [0.2, -0.3, 0.8]
                 :upper_body_posture,
                 :lower_body_posture,
                 # :com_target,
-                :dodge,
+                # :dodge,
                 :zmp_upper,
                 :zmp_lower,
                 # :right_hand_target,
@@ -136,12 +136,13 @@ Horizon = T/digit.Δt # timesteps
 
 dists = []
 
+
 for i = 1:Horizon
     qp_controller!(digit)
     step(digit)
     render_sim(digit, visualize) 
-    d = get_closest_dist_to_obstacle(digit)
-    push!(dists, d)
+    # d = get_closest_dist_to_obstacle(digit)
+    # push!(dists, d)
     # @show i
 end
 
